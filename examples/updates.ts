@@ -29,6 +29,7 @@ async function main() {
   setOptions(getLoaderOptions());
 
   const { Map } = await importLibrary("maps");
+  await importLibrary("marker");
   const element = document.getElementById("map")!;
 
   const map = new Map(element, mapOptions);

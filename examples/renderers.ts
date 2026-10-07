@@ -70,6 +70,7 @@ async function main() {
   setOptions(getLoaderOptions());
 
   const { Map } = await importLibrary("maps");
+  await importLibrary("marker");
   const maps: google.maps.Map[] = [];
 
   const panels: [HTMLElement, Renderer, string | null][] = [
