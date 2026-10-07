@@ -76,4 +76,16 @@ describe("DefaultRenderer with Advanced Markers", () => {
     // nothing is greater than Infinity, so a missing zIndex fails here too
     expect(larger).toBeGreaterThan(smaller ?? Infinity);
   });
+
+  test("renders the SVG as the marker's only child", () => {
+    const marker = render(5);
+    // of the two marker types, only AdvancedMarkerElement is an HTMLElement
+    if (!(marker instanceof HTMLElement)) {
+      throw new Error("expected an AdvancedMarkerElement");
+    }
+
+    expect(marker.children).toHaveLength(1);
+    expect(marker.firstElementChild?.tagName).toBe("svg");
+    expect(marker.querySelector("text")?.textContent).toBe("5");
+  });
 });

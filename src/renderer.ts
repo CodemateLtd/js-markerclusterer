@@ -150,9 +150,13 @@ export class DefaultRenderer implements Renderer {
         // adjust zIndex to be above other markers
         zIndex: ADVANCED_MARKER_CLUSTER_ZINDEX_BASE + count,
         title,
-        content: svgEl,
       };
-      return new google.maps.marker.AdvancedMarkerElement(clusterOptions);
+      const marker = new google.maps.marker.AdvancedMarkerElement(
+        clusterOptions
+      );
+      // child nodes replace the default pin; `content` is deprecated
+      marker.append(svgEl);
+      return marker;
     }
 
     // adjust zIndex to be above other markers
