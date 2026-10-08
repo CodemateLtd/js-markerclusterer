@@ -33,6 +33,11 @@ const mapOptions: google.maps.MapOptions = {
   mapId: MAP_ID,
 };
 
+// Clusters stack above individual markers, which have no zIndex, and larger
+// clusters stack above smaller ones. 1000000 is the value of the deprecated
+// google.maps.Marker.MAX_ZINDEX, so stacking is the same as before.
+const CLUSTER_ZINDEX_BASE = 1000000;
+
 const interpolatedRenderer = {
   palette: interpolateRgb("red", "blue"),
   render: function (
@@ -82,13 +87,28 @@ async function main() {
     [
       document.getElementById("simple")!,
       {
-        render: ({ count, position }: Cluster) =>
-          new google.maps.Marker({
-            label: { text: String(count), color: "white", fontSize: "10px" },
+        render: (
+          { count, position }: Cluster,
+          _stats: ClusterStats,
+          map: google.maps.Map
+        ) => {
+          const marker = new google.maps.marker.AdvancedMarkerElement({
+            map,
             position,
+            // the pin's glyph text is not exposed to screen readers
+            title: String(count),
             // adjust zIndex to be above other markers
-            zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
-          }),
+            zIndex: CLUSTER_ZINDEX_BASE + count,
+          });
+          // a new pin for every cluster, labelled with the count
+          marker.append(
+            new google.maps.marker.PinElement({
+              glyphText: String(count),
+              glyphColor: "white",
+            })
+          );
+          return marker;
+        },
       },
       null,
     ],
