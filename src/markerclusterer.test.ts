@@ -574,4 +574,12 @@ describe("MarkerClusterer cluster clicks", () => {
       cluster
     );
   });
+
+  test("Advanced Marker cluster is made clickable for onClusterClick", () => {
+    // A custom renderer that leaves gmpClickable unset.
+    const clusterMarker = new google.maps.marker.AdvancedMarkerElement();
+    renderCluster(clusterMarker, jest.fn());
+
+    expect(clusterMarker.gmpClickable).toBe(true);
+  });
 });
