@@ -109,6 +109,16 @@ export class SuperClusterViewportAlgorithm extends AbstractViewportAlgorithm {
     return { clusters: this.clusters, changed: clustersChanged };
   }
 
+  /**
+   * Clears the markers and clusters cached between calls to
+   * {@link calculate}, so that the next call reloads the index. Call it after
+   * moving a marker in place, which the cache cannot detect.
+   */
+  public reset(): void {
+    this.markers = undefined;
+    this.clusters = undefined;
+  }
+
   public cluster(input: AlgorithmInput): Cluster[] {
     /* recalculate new state because we can't use the cached version. */
     const state = this.getViewportState(input);
