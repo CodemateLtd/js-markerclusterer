@@ -582,4 +582,20 @@ describe("MarkerClusterer cluster clicks", () => {
 
     expect(clusterMarker.gmpClickable).toBe(true);
   });
+
+  test("default click handler accepts the Advanced Marker click event", () => {
+    const event: google.maps.marker.AdvancedMarkerClickEvent = new Event(
+      "gmp-click"
+    );
+    const cluster = new Cluster({
+      markers: [],
+      position: new google.maps.LatLng(0, 0),
+    });
+    const bounds = new google.maps.LatLngBounds();
+    jest.spyOn(cluster, "bounds", "get").mockImplementation(() => bounds);
+
+    defaultOnClusterClickHandler(event, cluster, map);
+
+    expect(map.fitBounds).toHaveBeenCalledWith(bounds);
+  });
 });

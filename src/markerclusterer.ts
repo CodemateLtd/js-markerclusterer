@@ -25,8 +25,17 @@ import { OverlayViewSafe } from "./overlay-view-safe";
 import { MarkerUtils, Marker } from "./marker-utils";
 import { assertNotNull } from "./utils";
 
+/**
+ * Called when a cluster marker is clicked. A legacy `google.maps.Marker`
+ * passes a `google.maps.MapMouseEvent`. A
+ * `google.maps.marker.AdvancedMarkerElement` passes a
+ * `google.maps.marker.AdvancedMarkerClickEvent`, which has no `latLng`; use
+ * `cluster.position` instead.
+ */
 export type onClusterClickHandler = (
-  event: google.maps.MapMouseEvent,
+  event:
+    | google.maps.MapMouseEvent
+    | google.maps.marker.AdvancedMarkerClickEvent,
   cluster: Cluster,
   map: google.maps.Map
 ) => void;
@@ -56,7 +65,7 @@ export enum MarkerClustererEvents {
 }
 
 export const defaultOnClusterClickHandler: onClusterClickHandler = (
-  _: google.maps.MapMouseEvent,
+  _: google.maps.MapMouseEvent | google.maps.marker.AdvancedMarkerClickEvent,
   cluster: Cluster,
   map: google.maps.Map
 ): void => {
@@ -277,7 +286,11 @@ export class MarkerClusterer extends OverlayViewSafe {
           cluster.marker.addListener(
             markerClickEventName,
             /* istanbul ignore next */
-            (event: google.maps.MapMouseEvent) => {
+            (
+              event:
+                | google.maps.MapMouseEvent
+                | google.maps.marker.AdvancedMarkerClickEvent
+            ) => {
               google.maps.event.trigger(
                 this,
                 MarkerClustererEvents.CLUSTER_CLICK,
