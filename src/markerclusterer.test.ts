@@ -19,6 +19,7 @@ import {
   ClusterStats,
   defaultOnClusterClickHandler,
   MarkerClusterer,
+  onClusterClickHandler,
 } from ".";
 
 import {
@@ -519,3 +520,58 @@ describe.each(markerClasses)(
     });
   }
 );
+
+describe("MarkerClusterer cluster clicks", () => {
+  let map: google.maps.Map;
+
+  beforeEach(() => {
+    map = new google.maps.Map(document.createElement("div"));
+  });
+
+  // Renders a single cluster of two markers, drawn as `clusterMarker`.
+  const renderCluster = (
+    clusterMarker: Marker,
+    onClusterClick: onClusterClickHandler
+  ) => {
+    const cluster = new Cluster({
+      markers: [new google.maps.Marker(), new google.maps.Marker()],
+    });
+    const markerClusterer = new MarkerClusterer({
+      algorithm: {
+        calculate: jest.fn().mockReturnValue({ clusters: [cluster] }),
+      },
+      renderer: { render: () => clusterMarker },
+      onClusterClick,
+    });
+    markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+    markerClusterer.getProjection = jest.fn();
+    markerClusterer.render();
+
+    return { markerClusterer, cluster };
+  };
+
+  test("legacy Marker cluster passes the click's MapMouseEvent to onClusterClick", () => {
+    const clusterMarker = new google.maps.Marker();
+    const onClusterClick = jest.fn();
+    const { markerClusterer, cluster } = renderCluster(
+      clusterMarker,
+      onClusterClick
+    );
+
+    const [[eventName, handler]] = jest.mocked(clusterMarker.addListener).mock
+      .calls;
+    expect(eventName).toBe("click");
+
+    const event = {
+      latLng: new google.maps.LatLng(1, 2),
+    } as google.maps.MapMouseEvent;
+    handler(event);
+
+    expect(onClusterClick).toHaveBeenCalledWith(event, cluster, map);
+    expect(google.maps.event.trigger).toHaveBeenCalledWith(
+      markerClusterer,
+      "click",
+      cluster
+    );
+  });
+});
