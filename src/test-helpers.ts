@@ -15,6 +15,7 @@
  */
 
 import { initialize } from "@googlemaps/jest-mocks";
+import { Marker, MarkerUtils } from "./marker-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -109,4 +110,43 @@ export function setupMapBounds(
   map.getBounds = jest.fn().mockReturnValue(mockBounds);
 
   return mockBounds;
+}
+
+/**
+ * Creates a marker of `markerClass` at `position` that {@link moveMarker} can
+ * move in place. The `google.maps.Marker` mock does not store its position,
+ * so its `getPosition` and `setPosition` are backed by a local value.
+ */
+export function createMarker(
+  markerClass: new () => Marker,
+  position: google.maps.LatLngLiteral
+): Marker {
+  const marker = new markerClass();
+
+  if (MarkerUtils.isAdvancedMarker(marker)) {
+    marker.position = position;
+    return marker;
+  }
+
+  let current = new google.maps.LatLng(position);
+  marker.getPosition = jest.fn(() => current);
+  marker.setPosition = jest.fn((p: google.maps.LatLngLiteral) => {
+    current = new google.maps.LatLng(p);
+  });
+  return marker;
+}
+
+/**
+ * Moves `marker` in place, the way an application would: by assigning
+ * `AdvancedMarkerElement.position` or calling `Marker.setPosition`.
+ */
+export function moveMarker(
+  marker: Marker,
+  position: google.maps.LatLngLiteral
+) {
+  if (MarkerUtils.isAdvancedMarker(marker)) {
+    marker.position = position;
+  } else {
+    marker.setPosition(position);
+  }
 }

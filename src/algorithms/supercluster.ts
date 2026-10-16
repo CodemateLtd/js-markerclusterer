@@ -38,6 +38,7 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
   protected markers: Marker[] = [];
   protected clusters: Cluster[] = [];
   protected state = { zoom: -1 };
+  protected reloadPending = false;
 
   constructor({ maxZoom, radius = 60, ...options }: SuperClusterOptions) {
     super({ maxZoom });
@@ -59,7 +60,8 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
     const state = { zoom: zoom };
 
-    if (!areMarkersEqual(input.markers, this.markers)) {
+    if (this.reloadPending || !areMarkersEqual(input.markers, this.markers)) {
+      this.reloadPending = false;
       inputsChanged = true;
 
       this.markers = [...input.markers];
@@ -102,6 +104,16 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
     }
 
     return { clusters: this.clusters, changed: clustersChanged };
+  }
+
+  /**
+   * Makes the next call to {@link calculate} reload the index and drops the
+   * clusters cached from the last call. Call it after moving a marker in
+   * place, which the cache cannot detect.
+   */
+  public reset(): void {
+    this.reloadPending = true;
+    this.clusters = [];
   }
 
   public cluster({ map }: AlgorithmInput): Cluster[] {
