@@ -271,34 +271,34 @@ export class MarkerClusterer extends OverlayViewSafe {
         // Make sure all individual markers are removed from the map.
         cluster.markers.forEach((marker) => MarkerUtils.setMap(marker, null));
         if (this.onClusterClick) {
-          // legacy Marker uses 'click' events, whereas AdvancedMarkerElement uses 'gmp-click'
-          const markerClickEventName = MarkerUtils.isAdvancedMarker(
-            cluster.marker
-          )
-            ? MarkerClustererEvents.GMP_CLICK
-            : MarkerClustererEvents.CLUSTER_CLICK;
+          const onClusterMarkerClick = (
+            event:
+              | google.maps.MapMouseEvent
+              | google.maps.marker.AdvancedMarkerClickEvent
+          ) => {
+            google.maps.event.trigger(
+              this,
+              MarkerClustererEvents.CLUSTER_CLICK,
+              cluster
+            );
+            this.onClusterClick(event, cluster, map);
+          };
 
+          // legacy Marker uses 'click' events with addListener, whereas
+          // AdvancedMarkerElement uses 'gmp-click' with addEventListener
           if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
             // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
             cluster.marker.gmpClickable = true;
+            cluster.marker.addEventListener(
+              MarkerClustererEvents.GMP_CLICK,
+              onClusterMarkerClick
+            );
+          } else {
+            cluster.marker.addListener(
+              MarkerClustererEvents.CLUSTER_CLICK,
+              onClusterMarkerClick
+            );
           }
-
-          cluster.marker.addListener(
-            markerClickEventName,
-            /* istanbul ignore next */
-            (
-              event:
-                | google.maps.MapMouseEvent
-                | google.maps.marker.AdvancedMarkerClickEvent
-            ) => {
-              google.maps.event.trigger(
-                this,
-                MarkerClustererEvents.CLUSTER_CLICK,
-                cluster
-              );
-              this.onClusterClick(event, cluster, map);
-            }
-          );
         }
       }
       MarkerUtils.setMap(cluster.marker, map);
