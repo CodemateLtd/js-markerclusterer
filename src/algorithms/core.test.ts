@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { initializeMocks, testMarkerTypes } from "../test-helpers";
+import {
+  createMarker,
+  initializeMocks,
+  testMarkerTypes,
+} from "../test-helpers";
 import { noop } from "./core";
 
 initializeMocks();
@@ -22,6 +26,19 @@ initializeMocks();
 describe.each(testMarkerTypes)("Core works with %s", (_, markerClass) => {
   test("noop should return equivalent number of clusters", () => {
     expect(noop([]).length).toBe(0);
-    expect(noop([new markerClass({}), new markerClass({})]).length).toBe(2);
+    expect(
+      noop([
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+      ]).length
+    ).toBe(2);
+  });
+
+  test("noop should leave markers without a position out of clusters", () => {
+    const placed = createMarker(markerClass, { lat: 1, lng: 1 });
+    const clusters = noop([placed, createMarker(markerClass, null)]);
+
+    expect(clusters).toHaveLength(1);
+    expect(clusters[0].markers).toEqual([placed]);
   });
 });

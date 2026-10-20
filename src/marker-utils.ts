@@ -22,6 +22,16 @@ export type Marker =
   | google.maps.marker.AdvancedMarkerElement;
 
 /**
+ * Returns the position if both coordinates are finite, otherwise `null`.
+ */
+const finitePositionOrNull = (
+  position: google.maps.LatLng | null | undefined
+): google.maps.LatLng | null =>
+  position && Number.isFinite(position.lat()) && Number.isFinite(position.lng())
+    ? position
+    : null;
+
+/**
  * util class that creates a common set of convenience functions to wrap
  * shared behavior of Advanced Markers and Markers.
  */
@@ -50,12 +60,17 @@ export class MarkerUtils {
     }
   }
 
-  public static getPosition(marker: Marker): google.maps.LatLng {
+  /**
+   * Returns the marker's position, or `null` if it has none or its
+   * coordinates are not finite. Markers without a position are left out of
+   * clustering.
+   */
+  public static getPosition(marker: Marker): google.maps.LatLng | null {
     // SuperClusterAlgorithm.calculate expects a LatLng instance so we fake it for Adv Markers
     if (this.isAdvancedMarker(marker)) {
       if (marker.position) {
         if (marker.position instanceof google.maps.LatLng) {
-          return marker.position;
+          return finitePositionOrNull(marker.position);
         }
         // since we can't cast to LatLngLiteral for reasons =(
         if (
@@ -69,11 +84,10 @@ export class MarkerUtils {
         }
       }
 
-      // @ts-expect-error - LatLng constructor expects numbers
-      return new google.maps.LatLng(null);
+      return null;
     }
 
-    return marker.getPosition()!;
+    return finitePositionOrNull(marker.getPosition());
   }
 
   public static getVisible(marker: Marker) {

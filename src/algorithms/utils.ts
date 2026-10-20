@@ -42,9 +42,10 @@ export const filterMarkersToPaddedViewport = (
     viewportPaddingPixels
   );
 
-  return markers.filter((marker) =>
-    extendedMapBounds.contains(MarkerUtils.getPosition(marker))
-  );
+  return markers.filter((marker) => {
+    const position = MarkerUtils.getPosition(marker);
+    return position !== null && extendedMapBounds.contains(position);
+  });
 };
 
 /**
@@ -189,7 +190,11 @@ export const areMarkersEqual = (markersA?: Marker[], markersB?: Marker[]) => {
       const posA = MarkerUtils.getPosition(markersA[i]);
       const posB = MarkerUtils.getPosition(markersB[i]);
 
-      if (!posA.equals(posB)) return false;
+      if (posA === null || posB === null) {
+        if (posA !== posB) return false;
+      } else if (!posA.equals(posB)) {
+        return false;
+      }
     }
   }
 

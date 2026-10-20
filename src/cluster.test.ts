@@ -15,7 +15,7 @@
  */
 
 import { Cluster } from "./cluster";
-import { initializeMocks, testMarkerTypes } from "./test-helpers";
+import { createMarker, initializeMocks, testMarkerTypes } from "./test-helpers";
 import { MarkerUtils } from "./marker-utils";
 
 initializeMocks();
@@ -35,8 +35,48 @@ describe.each(testMarkerTypes)("Cluster works with %s", (name, markerClass) => {
   });
 
   test("bounds should be undefined if markers", () => {
-    const cluster = new Cluster({ markers: [new markerClass()] });
+    const cluster = new Cluster({
+      markers: [createMarker(markerClass, { lat: 0, lng: 0 })],
+    });
     expect(cluster.bounds).toBeDefined();
+  });
+
+  test("bounds should be undefined if no marker has a position", () => {
+    const cluster = new Cluster({
+      markers: [
+        createMarker(markerClass, null),
+        createMarker(markerClass, null),
+      ],
+    });
+    expect(cluster.bounds).toBeUndefined();
+  });
+
+  test("bounds should be defined if position and no marker has a position", () => {
+    const cluster = new Cluster({
+      markers: [createMarker(markerClass, null)],
+      position: { lat: 0, lng: 0 },
+    });
+    expect(cluster.bounds).toBeDefined();
+  });
+
+  test("bounds should cover only markers with a position", () => {
+    const cluster = new Cluster({
+      markers: [
+        createMarker(markerClass, { lat: 60, lng: 25 }),
+        createMarker(markerClass, null),
+      ],
+    });
+    const bounds = cluster.bounds as google.maps.LatLngBounds;
+
+    expect(
+      jest
+        .mocked(bounds.extend)
+        .mock.calls.map(([position]) =>
+          position instanceof google.maps.LatLng
+            ? { lat: position.lat(), lng: position.lng() }
+            : position
+        )
+    ).toStrictEqual([{ lat: 60, lng: 25 }]);
   });
 
   test("can push additional markers", () => {

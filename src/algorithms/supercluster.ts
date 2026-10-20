@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import SuperCluster, { ClusterFeature } from "supercluster";
+import SuperCluster, { ClusterFeature, PointFeature } from "supercluster";
 import { deepEqual } from "fast-equals";
 import { AbstractAlgorithm, AlgorithmInput, AlgorithmOutput } from "./core";
 import { MarkerUtils, Marker } from "../marker-utils";
@@ -64,16 +64,20 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
       this.markers = [...input.markers];
 
-      const points = this.markers.map((marker) => {
+      const points: Array<PointFeature<{ marker: Marker }>> = [];
+      for (const marker of this.markers) {
         const position = MarkerUtils.getPosition(marker);
-        const coordinates = [position.lng(), position.lat()];
+        if (!position) continue;
 
-        return {
+        points.push({
           type: "Feature",
-          geometry: { type: "Point", coordinates },
+          geometry: {
+            type: "Point",
+            coordinates: [position.lng(), position.lat()],
+          },
           properties: { marker },
-        } as const;
-      });
+        });
+      }
       this.superCluster.load(points);
     }
 
@@ -134,7 +138,7 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
     return new Cluster({
       markers: [marker],
-      position: MarkerUtils.getPosition(marker),
+      position: MarkerUtils.getPosition(marker) ?? undefined,
     });
   }
 }
