@@ -54,7 +54,12 @@ export interface MarkerClustererOptions {
    * Default is {@link DefaultRenderer}.
    */
   renderer?: Renderer;
-  onClusterClick?: onClusterClickHandler;
+  /**
+   * Called when a cluster marker is clicked. Default fits the map to the
+   * cluster's bounds. Pass `null` to turn that off; the clusterer still
+   * fires its own `click` event ({@link MarkerClustererEvents.CLUSTER_CLICK}).
+   */
+  onClusterClick?: onClusterClickHandler | null;
 }
 
 export enum MarkerClustererEvents {
@@ -78,7 +83,7 @@ export const defaultOnClusterClickHandler: onClusterClickHandler = (
  */
 export class MarkerClusterer extends OverlayViewSafe {
   /** @see {@link MarkerClustererOptions.onClusterClick} */
-  public onClusterClick: onClusterClickHandler;
+  public onClusterClick: onClusterClickHandler | null;
   /** @see {@link MarkerClustererOptions.algorithm} */
   protected algorithm: Algorithm;
   protected clusters: Cluster[];

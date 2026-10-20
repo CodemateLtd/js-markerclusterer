@@ -300,6 +300,11 @@ describe.each(markerClasses)(
       expect(MarkerUtils.setMap).toHaveBeenCalledWith(marker2, null);
     });
 
+    test("markerClusterer accepts onClusterClick: null without a cast", () => {
+      const markerClusterer = new MarkerClusterer({ onClusterClick: null });
+      expect(markerClusterer.onClusterClick).toBeNull();
+    });
+
     test("markerClusterer onAdd calls render and sets listener", () => {
       const markerClusterer = new MarkerClusterer({
         markers: [],
