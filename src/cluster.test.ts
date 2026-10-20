@@ -35,7 +35,27 @@ describe.each(testMarkerTypes)("Cluster works with %s", (name, markerClass) => {
   });
 
   test("bounds should be undefined if markers", () => {
-    const cluster = new Cluster({ markers: [new markerClass()] });
+    const cluster = new Cluster({
+      markers: [createMarker(markerClass, { lat: 0, lng: 0 })],
+    });
+    expect(cluster.bounds).toBeDefined();
+  });
+
+  test("bounds should be undefined if no marker has a position", () => {
+    const cluster = new Cluster({
+      markers: [
+        createMarker(markerClass, null),
+        createMarker(markerClass, null),
+      ],
+    });
+    expect(cluster.bounds).toBeUndefined();
+  });
+
+  test("bounds should be defined if position and no marker has a position", () => {
+    const cluster = new Cluster({
+      markers: [createMarker(markerClass, null)],
+      position: { lat: 0, lng: 0 },
+    });
     expect(cluster.bounds).toBeDefined();
   });
 

@@ -38,16 +38,21 @@ export class Cluster {
   }
 
   public get bounds(): google.maps.LatLngBounds | undefined {
-    if (this.markers.length === 0 && !this._position) {
+    const positions: google.maps.LatLng[] = [];
+    for (const marker of this.markers) {
+      const position = MarkerUtils.getPosition(marker);
+      if (position) {
+        positions.push(position);
+      }
+    }
+
+    if (positions.length === 0 && !this._position) {
       return;
     }
 
     const bounds = new google.maps.LatLngBounds(this._position, this._position);
-    for (const marker of this.markers) {
-      const position = MarkerUtils.getPosition(marker);
-      if (position) {
-        bounds.extend(position);
-      }
+    for (const position of positions) {
+      bounds.extend(position);
     }
     return bounds;
   }
