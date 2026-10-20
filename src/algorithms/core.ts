@@ -55,6 +55,12 @@ export interface Algorithm {
    * Calculates an array of {@link Cluster}.
    */
   calculate: ({ markers, map }: AlgorithmInput) => AlgorithmOutput;
+  /**
+   * Clears any state cached between calls to {@link calculate}, so that the
+   * next call clusters the markers from scratch. It does not change what is
+   * on the map. Optional; algorithms that cache nothing can leave it out.
+   */
+  reset?: () => void;
 }
 
 export interface AlgorithmOptions {

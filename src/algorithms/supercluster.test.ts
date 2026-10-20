@@ -19,6 +19,8 @@ import {
   initializeMocks,
   testMarkerTypes,
   setupMapBounds,
+  createMarker,
+  moveMarker,
 } from "../test-helpers";
 import { Marker } from "../marker-utils";
 import { ClusterFeature } from "supercluster";
@@ -143,6 +145,98 @@ describe.each(testMarkerTypes)(
 
       expect(changed).toBeFalsy();
       expect(clusters).toBe(superCluster["clusters"]);
+    });
+
+    test.each([
+      ["the same array", (markers: Marker[]) => markers],
+      ["a new array", (markers: Marker[]) => [...markers]],
+    ])(
+      "should recluster markers moved in place after reset, given %s",
+      (_, nextInput) => {
+        const mapCanvasProjection =
+          jest.fn() as unknown as google.maps.MapCanvasProjection;
+        map.getZoom = jest.fn().mockReturnValue(3);
+        const a = createMarker(markerClass, { lat: 0, lng: 0 });
+        const b = createMarker(markerClass, { lat: 50, lng: 50 });
+        const markers = [a, b];
+
+        const superCluster = new SuperClusterAlgorithm({});
+        const before = superCluster.calculate({
+          markers,
+          map,
+          mapCanvasProjection,
+        });
+        expect(before.clusters).toHaveLength(2);
+
+        moveMarker(b, { lat: 0, lng: 0.0001 });
+        superCluster.reset();
+        const { clusters, changed } = superCluster.calculate({
+          markers: nextInput(markers),
+          map,
+          mapCanvasProjection,
+        });
+
+        expect(changed).toBe(true);
+        expect(clusters).toHaveLength(1);
+        expect(clusters[0].markers).toEqual(expect.arrayContaining([a, b]));
+      }
+    );
+
+    test("should report changed after reset when all markers were removed", () => {
+      const mapCanvasProjection =
+        jest.fn() as unknown as google.maps.MapCanvasProjection;
+      map.getZoom = jest.fn().mockReturnValue(3);
+      const markers = [
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 50, lng: 50 }),
+      ];
+
+      const superCluster = new SuperClusterAlgorithm({});
+      const load = jest.spyOn(superCluster["superCluster"], "load");
+      superCluster.calculate({ markers, map, mapCanvasProjection });
+
+      superCluster.reset();
+      const { clusters, changed } = superCluster.calculate({
+        markers: [],
+        map,
+        mapCanvasProjection,
+      });
+
+      expect(changed).toBe(true);
+      expect(clusters).toHaveLength(0);
+      expect(load).toHaveBeenLastCalledWith([]);
+    });
+
+    test("should report changed once after reset even if clusters are the same", () => {
+      const mapCanvasProjection =
+        jest.fn() as unknown as google.maps.MapCanvasProjection;
+      map.getZoom = jest.fn().mockReturnValue(3);
+      const markers = [
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 50, lng: 50 }),
+      ];
+
+      const superCluster = new SuperClusterAlgorithm({});
+      const load = jest.spyOn(superCluster["superCluster"], "load");
+      superCluster.calculate({ markers, map, mapCanvasProjection });
+
+      superCluster.reset();
+      const { changed } = superCluster.calculate({
+        markers,
+        map,
+        mapCanvasProjection,
+      });
+
+      expect(changed).toBe(true);
+      expect(load).toHaveBeenCalledTimes(2);
+
+      const next = superCluster.calculate({
+        markers,
+        map,
+        mapCanvasProjection,
+      });
+      expect(next.changed).toBe(false);
+      expect(load).toHaveBeenCalledTimes(2);
     });
 
     test("should round fractional zoom", () => {

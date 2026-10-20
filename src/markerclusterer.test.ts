@@ -120,6 +120,51 @@ describe.each(markerClasses)(
       expect(markerClusterer["renderClusters"]).toHaveBeenCalledTimes(0);
     });
 
+    test("markerClusterer render(true) resets the algorithm before calculate", () => {
+      const algorithm = {
+        calculate: jest.fn().mockReturnValue({ clusters: [] }),
+        reset: jest.fn(),
+      };
+      const markerClusterer = new MarkerClusterer({ markers: [], algorithm });
+
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest.fn().mockImplementation(() => ({}));
+      markerClusterer["renderClusters"] = jest.fn();
+      markerClusterer.render(true);
+
+      expect(algorithm.reset).toHaveBeenCalledTimes(1);
+      expect(algorithm.reset.mock.invocationCallOrder[0]).toBeLessThan(
+        algorithm.calculate.mock.invocationCallOrder[0]
+      );
+    });
+
+    test("markerClusterer render() does not reset the algorithm", () => {
+      const algorithm = {
+        calculate: jest.fn().mockReturnValue({ clusters: [] }),
+        reset: jest.fn(),
+      };
+      const markerClusterer = new MarkerClusterer({ markers: [], algorithm });
+
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest.fn().mockImplementation(() => ({}));
+      markerClusterer["renderClusters"] = jest.fn();
+      markerClusterer.render();
+
+      expect(algorithm.reset).toHaveBeenCalledTimes(0);
+      expect(algorithm.calculate).toHaveBeenCalledTimes(1);
+    });
+
+    test("markerClusterer render(true) calculates with an algorithm without reset", () => {
+      const markerClusterer = new MarkerClusterer({ markers: [], algorithm });
+
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest.fn().mockImplementation(() => ({}));
+      markerClusterer["renderClusters"] = jest.fn();
+      markerClusterer.render(true);
+
+      expect(calculate).toHaveBeenCalledTimes(1);
+    });
+
     test("markerClusterer reset calls delete and setMap null", () => {
       const marker = new markerClass();
       const markers: Marker[] = [marker];

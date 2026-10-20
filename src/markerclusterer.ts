@@ -165,8 +165,12 @@ export class MarkerClusterer extends OverlayViewSafe {
 
   /**
    * Recalculates and draws all the marker clusters.
+   *
+   * @param force Clears the algorithm's cache first, so the clusters are
+   * calculated from scratch. Pass `true` after moving a marker in place (with
+   * `setPosition` or by assigning `position`), which the cache cannot detect.
    */
-  public render(): void {
+  public render(force?: boolean): void {
     const map = this.getMap();
     if (map instanceof google.maps.Map && map.getProjection()) {
       google.maps.event.trigger(
@@ -174,6 +178,9 @@ export class MarkerClusterer extends OverlayViewSafe {
         MarkerClustererEvents.CLUSTERING_BEGIN,
         this
       );
+      if (force) {
+        this.algorithm.reset?.();
+      }
       const { clusters, changed } = this.algorithm.calculate({
         markers: this.markers,
         map,
