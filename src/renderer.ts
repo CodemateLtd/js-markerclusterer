@@ -65,6 +65,18 @@ export interface Renderer {
   render(cluster: Cluster, stats: ClusterStats, map: google.maps.Map): Marker;
 }
 
+/**
+ * Base z-index for clusters that {@link DefaultRenderer} renders as Advanced
+ * Markers.
+ *
+ * A cluster's zIndex is this base plus its marker count, so clusters are drawn
+ * above individual markers and larger clusters above smaller ones. The value
+ * equals the legacy `google.maps.Marker.MAX_ZINDEX`, which keeps stacking the
+ * same as before without depending on the deprecated `google.maps.Marker`
+ * class.
+ */
+const ADVANCED_MARKER_CLUSTER_ZINDEX_BASE = 1000000;
+
 export class DefaultRenderer implements Renderer {
   /**
    * The default render function for the library used by {@link MarkerClusterer}.
@@ -121,9 +133,7 @@ export class DefaultRenderer implements Renderer {
 <text x="50%" y="50%" style="fill:#fff" text-anchor="middle" font-size="50" dominant-baseline="middle" font-family="roboto,arial,sans-serif">${count}</text>
 </svg>`;
 
-    const title = `Cluster of ${count} markers`,
-      // adjust zIndex to be above other markers
-      zIndex: number = Number(google.maps.Marker.MAX_ZINDEX) + count;
+    const title = `Cluster of ${count} markers`;
 
     if (MarkerUtils.isAdvancedMarkerAvailable(map)) {
       // create cluster SVG element
@@ -137,12 +147,20 @@ export class DefaultRenderer implements Renderer {
       const clusterOptions: google.maps.marker.AdvancedMarkerElementOptions = {
         map,
         position,
-        zIndex,
+        // adjust zIndex to be above other markers
+        zIndex: ADVANCED_MARKER_CLUSTER_ZINDEX_BASE + count,
         title,
-        content: svgEl,
       };
-      return new google.maps.marker.AdvancedMarkerElement(clusterOptions);
+      const marker = new google.maps.marker.AdvancedMarkerElement(
+        clusterOptions
+      );
+      // child nodes replace the default pin; `content` is deprecated
+      marker.append(svgEl);
+      return marker;
     }
+
+    // adjust zIndex to be above other markers
+    const zIndex: number = Number(google.maps.Marker.MAX_ZINDEX) + count;
 
     const clusterOptions: google.maps.MarkerOptions = {
       position,
