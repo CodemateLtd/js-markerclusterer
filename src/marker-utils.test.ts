@@ -99,6 +99,15 @@ describe("MarkerUtils.getPosition", () => {
   const toLiteral = (position: google.maps.LatLng | null) =>
     position && { lat: position.lat(), lng: position.lng() };
 
+  test("returns null for a marker without a position", () => {
+    expect(
+      MarkerUtils.getPosition(new google.maps.marker.AdvancedMarkerElement())
+    ).toBeNull();
+    expect(MarkerUtils.getPosition(advancedMarker(null))).toBeNull();
+    expect(MarkerUtils.getPosition(legacyMarker(undefined))).toBeNull();
+    expect(MarkerUtils.getPosition(legacyMarker(null))).toBeNull();
+  });
+
   test("keeps zero coordinates", () => {
     expect(
       toLiteral(MarkerUtils.getPosition(advancedMarker({ lat: 0, lng: 0 })))

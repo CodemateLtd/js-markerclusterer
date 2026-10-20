@@ -164,12 +164,12 @@ export abstract class AbstractViewportAlgorithm extends AbstractAlgorithm {
  * @hidden
  */
 export const noop = (markers: Marker[]): Cluster[] => {
-  const clusters = markers.map(
-    (marker) =>
-      new Cluster({
-        position: MarkerUtils.getPosition(marker),
-        markers: [marker],
-      })
-  );
+  const clusters: Cluster[] = [];
+  for (const marker of markers) {
+    const position = MarkerUtils.getPosition(marker);
+    if (position) {
+      clusters.push(new Cluster({ position, markers: [marker] }));
+    }
+  }
   return clusters;
 };

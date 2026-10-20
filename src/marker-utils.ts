@@ -50,7 +50,11 @@ export class MarkerUtils {
     }
   }
 
-  public static getPosition(marker: Marker): google.maps.LatLng {
+  /**
+   * Returns the marker's position, or `null` if it has none. Markers without
+   * a position are left out of clustering.
+   */
+  public static getPosition(marker: Marker): google.maps.LatLng | null {
     // SuperClusterAlgorithm.calculate expects a LatLng instance so we fake it for Adv Markers
     if (this.isAdvancedMarker(marker)) {
       if (marker.position) {
@@ -69,11 +73,10 @@ export class MarkerUtils {
         }
       }
 
-      // @ts-expect-error - LatLng constructor expects numbers
-      return new google.maps.LatLng(null);
+      return null;
     }
 
-    return marker.getPosition()!;
+    return marker.getPosition() ?? null;
   }
 
   public static getVisible(marker: Marker) {

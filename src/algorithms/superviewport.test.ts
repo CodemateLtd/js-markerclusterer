@@ -19,6 +19,7 @@ import {
   initializeMocks,
   testMarkerTypes,
   setupMapBounds,
+  createMarker,
 } from "../test-helpers";
 import { MapCanvasProjection } from "@googlemaps/jest-mocks";
 import { Marker } from "../marker-utils";
@@ -53,7 +54,7 @@ describe.each(testMarkerTypes)(
     });
 
     test("should only call load if markers change", () => {
-      const markers: Marker[] = [new markerClass()];
+      const markers: Marker[] = [createMarker(markerClass, { lat: 0, lng: 0 })];
 
       const superCluster = new SuperClusterViewportAlgorithm({});
       superCluster["superCluster"].load = jest.fn();
@@ -80,7 +81,10 @@ describe.each(testMarkerTypes)(
     });
 
     test("should cluster markers", () => {
-      const markers: Marker[] = [new markerClass(), new markerClass()];
+      const markers: Marker[] = [
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+      ];
 
       const superCluster = new SuperClusterViewportAlgorithm({});
       map.getZoom = jest.fn().mockReturnValue(0);
@@ -340,6 +344,36 @@ describe.each(testMarkerTypes)(
 
       expect(state.view).toEqual([0, 0, 0, 0]);
       expect(state.zoom).toBe(10);
+    });
+
+    test("should leave markers without a position out of clusters", () => {
+      // The mocked LatLngBounds shrink the padded viewport to (0, 0), so the
+      // placed markers sit there too.
+      const placed = [
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+      ];
+      const positionless = [
+        createMarker(markerClass, null),
+        createMarker(markerClass, null),
+      ];
+
+      map.getZoom = jest.fn().mockReturnValue(3);
+      setupMapBounds(map, { west: -10, south: -10, east: 10, north: 10 });
+
+      const algorithm = new SuperClusterViewportAlgorithm({});
+      const { clusters } = algorithm.calculate({
+        markers: [...placed, ...positionless],
+        map,
+        mapCanvasProjection,
+      });
+
+      expect(clusters).toHaveLength(1);
+      expect(clusters[0].markers).toHaveLength(3);
+      expect(
+        clusters[0].markers.every((marker) => placed.includes(marker))
+      ).toBe(true);
     });
   }
 );

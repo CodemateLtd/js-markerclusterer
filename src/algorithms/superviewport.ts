@@ -21,7 +21,7 @@ import {
   ViewportAlgorithmOptions,
 } from "./core";
 import { SuperClusterOptions } from "./supercluster";
-import SuperCluster, { ClusterFeature } from "supercluster";
+import SuperCluster, { ClusterFeature, PointFeature } from "supercluster";
 import { MarkerUtils, Marker } from "../marker-utils";
 import { Cluster } from "../cluster";
 import { areClustersEqual, areMarkersEqual, getPaddedViewport } from "./utils";
@@ -76,19 +76,20 @@ export class SuperClusterViewportAlgorithm extends AbstractViewportAlgorithm {
       markersChanged = true;
       this.markers = [...input.markers];
 
-      const points = this.markers.map((marker) => {
+      const points: Array<PointFeature<{ marker: Marker }>> = [];
+      for (const marker of this.markers) {
         const position = MarkerUtils.getPosition(marker);
-        const coordinates = [position.lng(), position.lat()];
+        if (!position) continue;
 
-        return {
-          type: "Feature" as const,
+        points.push({
+          type: "Feature",
           geometry: {
-            type: "Point" as const,
-            coordinates,
+            type: "Point",
+            coordinates: [position.lng(), position.lat()],
           },
           properties: { marker },
-        };
-      });
+        });
+      }
 
       this.superCluster.load(points);
     }
@@ -139,7 +140,7 @@ export class SuperClusterViewportAlgorithm extends AbstractViewportAlgorithm {
 
     return new Cluster({
       markers: [marker],
-      position: MarkerUtils.getPosition(marker),
+      position: MarkerUtils.getPosition(marker) ?? undefined,
     });
   }
 

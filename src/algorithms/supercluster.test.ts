@@ -19,6 +19,7 @@ import {
   initializeMocks,
   testMarkerTypes,
   setupMapBounds,
+  createMarker,
 } from "../test-helpers";
 import { Marker } from "../marker-utils";
 import { ClusterFeature } from "supercluster";
@@ -37,7 +38,7 @@ describe.each(testMarkerTypes)(
     test("should only call load if markers change", () => {
       const mapCanvasProjection =
         jest.fn() as unknown as google.maps.MapCanvasProjection;
-      const markers: Marker[] = [new markerClass()];
+      const markers: Marker[] = [createMarker(markerClass, { lat: 0, lng: 0 })];
 
       const superCluster = new SuperClusterAlgorithm({});
       superCluster["superCluster"].load = jest.fn();
@@ -58,7 +59,10 @@ describe.each(testMarkerTypes)(
     test("should cluster markers", () => {
       const mapCanvasProjection =
         jest.fn() as unknown as google.maps.MapCanvasProjection;
-      const markers: Marker[] = [new markerClass(), new markerClass()];
+      const markers: Marker[] = [
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+        createMarker(markerClass, { lat: 0, lng: 0 }),
+      ];
 
       const superCluster = new SuperClusterAlgorithm({});
       map.getZoom = jest.fn().mockReturnValue(0);
@@ -166,6 +170,35 @@ describe.each(testMarkerTypes)(
         [-180, -90, 180, 90],
         3
       );
+    });
+
+    test("should leave markers without a position out of clusters", () => {
+      const mapCanvasProjection =
+        jest.fn() as unknown as google.maps.MapCanvasProjection;
+      const placed = [
+        createMarker(markerClass, { lat: 60, lng: 25 }),
+        createMarker(markerClass, { lat: 60.1, lng: 25.1 }),
+        createMarker(markerClass, { lat: 60.2, lng: 25.2 }),
+      ];
+      const positionless = [
+        createMarker(markerClass, null),
+        createMarker(markerClass, null),
+      ];
+
+      const superCluster = new SuperClusterAlgorithm({});
+      map.getZoom = jest.fn().mockReturnValue(3);
+      setupMapBounds(map, { west: -180, south: -90, east: 180, north: 90 });
+      const { clusters } = superCluster.calculate({
+        markers: [...placed, ...positionless],
+        map,
+        mapCanvasProjection,
+      });
+
+      expect(clusters).toHaveLength(1);
+      expect(clusters[0].markers).toHaveLength(3);
+      expect(
+        clusters[0].markers.every((marker) => placed.includes(marker))
+      ).toBe(true);
     });
   }
 );

@@ -15,6 +15,7 @@
  */
 
 import { initialize } from "@googlemaps/jest-mocks";
+import { Marker } from "./marker-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -91,6 +92,26 @@ export const testMarkerTypes = [
   ["Marker", google.maps.Marker],
   ["AdvancedMarker", google.maps.marker.AdvancedMarkerElement],
 ] as Array<[string, any]>;
+
+/**
+ * Creates a marker of the given class at `position`, or without a position
+ * when `position` is null. A legacy Marker without a position returns
+ * `undefined` from getPosition, as the Maps JavaScript API does.
+ */
+export function createMarker(
+  markerClass: any,
+  position: google.maps.LatLngLiteral | null
+): Marker {
+  const marker = new markerClass();
+  if (marker instanceof google.maps.marker.AdvancedMarkerElement) {
+    if (position) marker.position = position;
+  } else {
+    jest
+      .mocked(marker.getPosition)
+      .mockReturnValue(position ? new google.maps.LatLng(position) : undefined);
+  }
+  return marker;
+}
 
 /**
  * Helper to quickly configure a mock Google Map to return specific bounds.
