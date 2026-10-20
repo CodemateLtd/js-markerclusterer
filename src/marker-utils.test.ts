@@ -80,3 +80,59 @@ describe.each(testMarkerTypes)(
     });
   }
 );
+
+describe("MarkerUtils.getPosition", () => {
+  const advancedMarker = (
+    position: google.maps.marker.AdvancedMarkerElement["position"]
+  ) => {
+    const marker = new google.maps.marker.AdvancedMarkerElement();
+    marker.position = position;
+    return marker;
+  };
+
+  const legacyMarker = (position: google.maps.LatLng | null | undefined) => {
+    const marker = new google.maps.Marker();
+    jest.mocked(marker.getPosition).mockReturnValue(position);
+    return marker;
+  };
+
+  const toLiteral = (position: google.maps.LatLng | null) =>
+    position && { lat: position.lat(), lng: position.lng() };
+
+  test("keeps zero coordinates", () => {
+    expect(
+      toLiteral(MarkerUtils.getPosition(advancedMarker({ lat: 0, lng: 0 })))
+    ).toEqual({ lat: 0, lng: 0 });
+    expect(
+      toLiteral(
+        MarkerUtils.getPosition(advancedMarker(new google.maps.LatLng(0, 0)))
+      )
+    ).toEqual({ lat: 0, lng: 0 });
+    expect(
+      toLiteral(
+        MarkerUtils.getPosition(legacyMarker(new google.maps.LatLng(0, 0)))
+      )
+    ).toEqual({ lat: 0, lng: 0 });
+  });
+
+  test("reads the coordinates of altitude-bearing positions", () => {
+    const latLngAltitude = new google.maps.LatLngAltitude({
+      lat: 10,
+      lng: 20,
+      altitude: 100,
+    });
+    // The mock ignores its constructor arguments.
+    Object.assign(latLngAltitude, { lat: 10, lng: 20, altitude: 100 });
+
+    expect(
+      toLiteral(
+        MarkerUtils.getPosition(
+          advancedMarker({ lat: 10, lng: 20, altitude: 100 })
+        )
+      )
+    ).toEqual({ lat: 10, lng: 20 });
+    expect(
+      toLiteral(MarkerUtils.getPosition(advancedMarker(latLngAltitude)))
+    ).toEqual({ lat: 10, lng: 20 });
+  });
+});
