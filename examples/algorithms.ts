@@ -36,6 +36,7 @@ async function main() {
   setOptions(getLoaderOptions());
 
   const { Map } = await importLibrary("maps");
+  await importLibrary("marker");
   const { ControlPosition } = await importLibrary("core");
   const maps: google.maps.Map[] = [];
 
