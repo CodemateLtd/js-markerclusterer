@@ -53,13 +53,18 @@ export interface Renderer {
   /**
    * Turn a {@link Cluster} into a `Marker`.
    *
-   * Below is a simple example to create a marker with the number of markers in the cluster as a label.
+   * Below is a simple example to create an Advanced Marker with the number
+   * of markers in the cluster as a label. A legacy `google.maps.Marker` is
+   * also accepted for backward compatibility.
    *
    * ```typescript
-   * return new google.maps.Marker({
-   *   position,
-   *   label: String(markers.length),
+   * const marker = new google.maps.marker.AdvancedMarkerElement({
+   *   position: cluster.position,
    * });
+   * const label = document.createElement("div");
+   * label.textContent = String(cluster.markers.length);
+   * marker.append(label);
+   * return marker;
    * ```
    */
   render(cluster: Cluster, stats: ClusterStats, map: google.maps.Map): Marker;
@@ -90,31 +95,32 @@ export class DefaultRenderer implements Renderer {
    *     ? "#ff0000"
    *     : "#0000ff";
    *
-   * // create svg url with fill color
-   * const svg = window.btoa(`
-   * <svg fill="${color}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
-   *   <circle cx="120" cy="120" opacity=".6" r="70" />
-   *   <circle cx="120" cy="120" opacity=".3" r="90" />
-   *   <circle cx="120" cy="120" opacity=".2" r="110" />
-   *   <circle cx="120" cy="120" opacity=".1" r="130" />
-   * </svg>`);
+   * // create svg literal with fill color and the count as its label
+   * const svg = `<svg fill="${color}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="50" height="50">
+   * <circle cx="120" cy="120" opacity=".6" r="70" />
+   * <circle cx="120" cy="120" opacity=".3" r="90" />
+   * <circle cx="120" cy="120" opacity=".2" r="110" />
+   * <text x="50%" y="50%" style="fill:#fff" text-anchor="middle" font-size="50" dominant-baseline="middle" font-family="roboto,arial,sans-serif">${count}</text>
+   * </svg>`;
    *
-   * // create marker using svg icon
-   * return new google.maps.Marker({
+   * // parse the svg into an element and append it as the Advanced Marker's child
+   * const svgEl = new DOMParser().parseFromString(svg, "image/svg+xml")
+   *   .documentElement;
+   * svgEl.setAttribute("transform", "translate(0 25)");
+   *
+   * const marker = new google.maps.marker.AdvancedMarkerElement({
+   *   map,
    *   position,
-   *   icon: {
-   *     url: `data:image/svg+xml;base64,${svg}`,
-   *     scaledSize: new google.maps.Size(45, 45),
-   *   },
-   *   label: {
-   *     text: String(count),
-   *     color: "rgba(255,255,255,0.9)",
-   *     fontSize: "12px",
-   *   },
-   *   // adjust zIndex to be above other markers
-   *   zIndex: 1000 + count,
+   *   // adjust zIndex to be above other markers; see ADVANCED_MARKER_CLUSTER_ZINDEX_BASE
+   *   zIndex: ADVANCED_MARKER_CLUSTER_ZINDEX_BASE + count,
+   *   title: `Cluster of ${count} markers`,
    * });
+   * marker.append(svgEl);
+   * return marker;
    * ```
+   *
+   * Where Advanced Markers are not available, a legacy `google.maps.Marker`
+   * with the same icon is used instead.
    */
   public render(
     { count, position }: Cluster,

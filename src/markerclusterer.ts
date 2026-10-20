@@ -41,8 +41,9 @@ export interface MarkerClustererOptions {
   algorithmOptions?: AlgorithmOptions;
   map?: google.maps.Map | null;
   /**
-   * An object that converts a {@link Cluster} into a `google.maps.Marker`.
-   * Default is {@link DefaultRenderer}.
+   * An object that converts a {@link Cluster} into a {@link Marker}: an
+   * `AdvancedMarkerElement`, or a legacy `google.maps.Marker` for backward
+   * compatibility. Default is {@link DefaultRenderer}.
    */
   renderer?: Renderer;
   onClusterClick?: onClusterClickHandler;
