@@ -491,6 +491,95 @@ describe.each(markerClasses)(
       expect(markerClusterer["markers"]).toHaveLength(0);
     });
 
+    test("markerClusterer with the default SuperClusterAlgorithm redraws a marker replaced at the same position", () => {
+      const makeMarkerAt = (lat: number, lng: number): Marker => {
+        const m = new markerClass();
+        if (MarkerUtils.isAdvancedMarker(m)) {
+          m.position = { lat, lng };
+        } else {
+          (m as google.maps.Marker).getPosition = jest
+            .fn()
+            .mockReturnValue(new google.maps.LatLng(lat, lng));
+        }
+        return m;
+      };
+
+      const onMap = new Map<Marker, google.maps.Map | null>();
+      const setMapSpy = jest
+        .spyOn(MarkerUtils, "setMap")
+        .mockImplementation((marker, m) => void onMap.set(marker, m));
+
+      map.getProjection = jest.fn().mockReturnValue({});
+      map.getZoom = jest.fn().mockReturnValue(6);
+
+      // 10 degrees apart: two single-marker clusters at zoom 6, so each
+      // marker is drawn directly rather than folded into a group marker.
+      const a = makeMarkerAt(0, 0);
+      const b = makeMarkerAt(10, 10);
+      const markerClusterer = new MarkerClusterer({ markers: [a, b] });
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest
+        .fn()
+        .mockImplementation(() => jest.fn());
+
+      markerClusterer.render();
+
+      const b2 = makeMarkerAt(10, 10);
+      markerClusterer.removeMarker(b, true);
+      markerClusterer.addMarker(b2, true);
+      markerClusterer.render();
+
+      expect(onMap.get(b2)).toBe(map);
+      expect(onMap.get(b)).toBeNull();
+
+      setMapSpy.mockRestore();
+    });
+
+    test("markerClusterer with the default SuperClusterAlgorithm redraws markers replaced by clearMarkers(true) and addMarkers()", () => {
+      const makeMarkerAt = (lat: number, lng: number): Marker => {
+        const m = new markerClass();
+        if (MarkerUtils.isAdvancedMarker(m)) {
+          m.position = { lat, lng };
+        } else {
+          (m as google.maps.Marker).getPosition = jest
+            .fn()
+            .mockReturnValue(new google.maps.LatLng(lat, lng));
+        }
+        return m;
+      };
+
+      const onMap = new Map<Marker, google.maps.Map | null>();
+      const setMapSpy = jest
+        .spyOn(MarkerUtils, "setMap")
+        .mockImplementation((marker, m) => void onMap.set(marker, m));
+
+      map.getProjection = jest.fn().mockReturnValue({});
+      map.getZoom = jest.fn().mockReturnValue(6);
+
+      const x = makeMarkerAt(0, 0);
+      const y = makeMarkerAt(10, 10);
+      const markerClusterer = new MarkerClusterer({ markers: [x, y] });
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest
+        .fn()
+        .mockImplementation(() => jest.fn());
+
+      markerClusterer.render();
+
+      const x2 = makeMarkerAt(0, 0);
+      const y2 = makeMarkerAt(10, 10);
+      markerClusterer.clearMarkers(true);
+      markerClusterer.addMarkers([x2, y2], true);
+      markerClusterer.render();
+
+      expect(onMap.get(x2)).toBe(map);
+      expect(onMap.get(y2)).toBe(map);
+      expect(onMap.get(x)).toBeNull();
+      expect(onMap.get(y)).toBeNull();
+
+      setMapSpy.mockRestore();
+    });
+
     test("default click handler fitBounds", () => {
       const cluster = new Cluster({
         markers: [],
