@@ -108,6 +108,18 @@ describe("MarkerUtils.getPosition", () => {
     expect(MarkerUtils.getPosition(legacyMarker(null))).toBeNull();
   });
 
+  test("returns null for a position with non-finite coordinates", () => {
+    expect(
+      MarkerUtils.getPosition(legacyMarker(new google.maps.LatLng(NaN, 1)))
+    ).toBeNull();
+    expect(
+      MarkerUtils.getPosition(legacyMarker(new google.maps.LatLng(1, Infinity)))
+    ).toBeNull();
+    expect(
+      MarkerUtils.getPosition(advancedMarker(new google.maps.LatLng(NaN, 1)))
+    ).toBeNull();
+  });
+
   test("keeps zero coordinates", () => {
     expect(
       toLiteral(MarkerUtils.getPosition(advancedMarker({ lat: 0, lng: 0 })))
