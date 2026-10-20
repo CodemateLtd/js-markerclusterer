@@ -54,7 +54,12 @@ export interface MarkerClustererOptions {
    * Default is {@link DefaultRenderer}.
    */
   renderer?: Renderer;
-  onClusterClick?: onClusterClickHandler;
+  /**
+   * Called when a cluster marker is clicked. Default fits the map to the
+   * cluster's bounds. Pass `null` to turn that off; the clusterer still
+   * fires its own `click` event ({@link MarkerClustererEvents.CLUSTER_CLICK}).
+   */
+  onClusterClick?: onClusterClickHandler | null;
 }
 
 export enum MarkerClustererEvents {
@@ -78,7 +83,7 @@ export const defaultOnClusterClickHandler: onClusterClickHandler = (
  */
 export class MarkerClusterer extends OverlayViewSafe {
   /** @see {@link MarkerClustererOptions.onClusterClick} */
-  public onClusterClick: onClusterClickHandler;
+  public onClusterClick: onClusterClickHandler | null;
   /** @see {@link MarkerClustererOptions.algorithm} */
   protected algorithm: Algorithm;
   protected clusters: Cluster[];
@@ -270,35 +275,33 @@ export class MarkerClusterer extends OverlayViewSafe {
         cluster.marker = this.renderer.render(cluster, stats, map);
         // Make sure all individual markers are removed from the map.
         cluster.markers.forEach((marker) => MarkerUtils.setMap(marker, null));
-        if (this.onClusterClick) {
-          const onClusterMarkerClick = (
-            event:
-              | google.maps.MapMouseEvent
-              | google.maps.marker.AdvancedMarkerClickEvent
-          ) => {
-            google.maps.event.trigger(
-              this,
-              MarkerClustererEvents.CLUSTER_CLICK,
-              cluster
-            );
-            this.onClusterClick(event, cluster, map);
-          };
+        const onClusterMarkerClick = (
+          event:
+            | google.maps.MapMouseEvent
+            | google.maps.marker.AdvancedMarkerClickEvent
+        ) => {
+          google.maps.event.trigger(
+            this,
+            MarkerClustererEvents.CLUSTER_CLICK,
+            cluster
+          );
+          if (this.onClusterClick) this.onClusterClick(event, cluster, map);
+        };
 
-          // legacy Marker uses 'click' events with addListener, whereas
-          // AdvancedMarkerElement uses 'gmp-click' with addEventListener
-          if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
-            // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
-            cluster.marker.gmpClickable = true;
-            cluster.marker.addEventListener(
-              MarkerClustererEvents.GMP_CLICK,
-              onClusterMarkerClick
-            );
-          } else {
-            cluster.marker.addListener(
-              MarkerClustererEvents.CLUSTER_CLICK,
-              onClusterMarkerClick
-            );
-          }
+        // legacy Marker uses 'click' events with addListener, whereas
+        // AdvancedMarkerElement uses 'gmp-click' with addEventListener
+        if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
+          // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
+          cluster.marker.gmpClickable = true;
+          cluster.marker.addEventListener(
+            MarkerClustererEvents.GMP_CLICK,
+            onClusterMarkerClick
+          );
+        } else {
+          cluster.marker.addListener(
+            MarkerClustererEvents.CLUSTER_CLICK,
+            onClusterMarkerClick
+          );
         }
       }
       MarkerUtils.setMap(cluster.marker, map);
