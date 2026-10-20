@@ -55,6 +55,31 @@ describe.each(testMarkerTypes)(
       ]);
     });
 
+    test("should reload and report changed when a marker is replaced with a new object at the same position", () => {
+      const mapCanvasProjection =
+        jest.fn() as unknown as google.maps.MapCanvasProjection;
+      const a = new markerClass();
+      const b = new markerClass();
+
+      const superCluster = new SuperClusterAlgorithm({});
+      map.getZoom = jest.fn().mockReturnValue(0);
+      setupMapBounds(map, { west: -180, south: -90, east: 180, north: 90 });
+
+      superCluster.calculate({ markers: [a, b], map, mapCanvasProjection });
+
+      const b2 = new markerClass();
+      const { clusters, changed } = superCluster.calculate({
+        markers: [a, b2],
+        map,
+        mapCanvasProjection,
+      });
+
+      const clustered = clusters.flatMap((cluster) => cluster.markers);
+      expect(clustered).toContain(b2);
+      expect(clustered).not.toContain(b);
+      expect(changed).toBe(true);
+    });
+
     test("should cluster markers", () => {
       const mapCanvasProjection =
         jest.fn() as unknown as google.maps.MapCanvasProjection;

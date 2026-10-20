@@ -101,7 +101,8 @@ export class SuperClusterViewportAlgorithm extends AbstractViewportAlgorithm {
     }
 
     const newClusters = this.cluster(input);
-    const clustersChanged = !areClustersEqual(this.clusters, newClusters);
+    const clustersChanged =
+      markersChanged || !areClustersEqual(this.clusters, newClusters);
 
     this.state = state;
     this.clusters = newClusters;
