@@ -120,23 +120,41 @@ describe.each(markerClasses)(
       expect(markerClusterer["renderClusters"]).toHaveBeenCalledTimes(0);
     });
 
-    test("markerClusterer reset calls delete and setMap null", () => {
-      const marker = new markerClass();
-      const markers: Marker[] = [marker];
+    test("markerClusterer reset takes everything off the map and keeps cluster markers", () => {
+      const single = new markerClass();
+      const grouped = [new markerClass(), new markerClass()];
+      const markers: Marker[] = [single, ...grouped];
 
       const markerClusterer = new MarkerClusterer({
         markers,
       });
-      const clusters = [new Cluster({ markers })];
-      const deleteSpy = jest.spyOn(clusters[0], "delete");
+      const singleCluster = new Cluster({ markers: [single] });
+      singleCluster.marker = single;
+      // The cluster keeps the array it is given, so hand it a copy to compare
+      // against.
+      const groupCluster = new Cluster({ markers: [...grouped] });
+      const groupIcon = new markerClass();
+      groupCluster.marker = groupIcon;
 
       MarkerUtils.setMap = jest.fn().mockImplementation(() => null);
 
-      markerClusterer["clusters"] = clusters;
+      markerClusterer["clusters"] = [singleCluster, groupCluster];
       markerClusterer["reset"]();
 
-      expect(MarkerUtils.setMap).toHaveBeenCalledWith(marker, null);
-      expect(deleteSpy).toHaveBeenCalledTimes(1);
+      // The mock markers are deep-equal to each other, so match by identity.
+      const takenOff = (marker: Marker) =>
+        (MarkerUtils.setMap as jest.Mock).mock.calls.some(
+          ([m, map]) => m === marker && map === null
+        );
+      markers.forEach((marker) => expect(takenOff(marker)).toBe(true));
+      expect(takenOff(groupIcon)).toBe(true);
+      expect(singleCluster.markers).toHaveLength(1);
+      expect(singleCluster.markers[0]).toBe(single);
+      expect(groupCluster.markers).toHaveLength(grouped.length);
+      grouped.forEach((marker, i) =>
+        expect(groupCluster.markers[i]).toBe(marker)
+      );
+      expect(markerClusterer["clusters"]).toEqual([]);
     });
 
     test("markerClusterer render should not remove markers from the map if they were already rendered", () => {
