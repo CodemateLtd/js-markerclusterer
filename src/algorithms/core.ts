@@ -140,7 +140,6 @@ export abstract class AbstractViewportAlgorithm extends AbstractAlgorithm {
         clusters: this.noop({
           markers,
         }),
-        changed: false,
       };
     }
 

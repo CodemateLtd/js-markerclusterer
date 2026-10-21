@@ -21,6 +21,7 @@ import {
   ViewportAlgorithmOptions,
 } from "./core";
 import {
+  areMarkersEqual,
   distanceBetweenPoints,
   extendBoundsToPaddedViewport,
   filterMarkersToPaddedViewport,
@@ -52,6 +53,7 @@ export class GridAlgorithm extends AbstractViewportAlgorithm {
   protected maxDistance: number;
   protected clusters: Cluster[] = [];
   protected state = { zoom: -1 };
+  protected markers?: Marker[];
 
   constructor({ maxDistance = 40000, gridSize = 40, ...options }: GridOptions) {
     super(options);
@@ -72,7 +74,8 @@ export class GridAlgorithm extends AbstractViewportAlgorithm {
     const newState = { zoom };
     let changed = false;
     if (this.state.zoom >= this.maxZoom && newState.zoom >= this.maxZoom) {
-      // still at or beyond maxZoom, no change
+      // still at or beyond maxZoom, only a change of markers needs a redraw
+      changed = !areMarkersEqual(this.markers, markers);
     } else {
       changed = !deepEqual(this.state, newState);
     }
@@ -80,6 +83,8 @@ export class GridAlgorithm extends AbstractViewportAlgorithm {
     this.state = newState;
 
     if (zoom >= this.maxZoom) {
+      // only compared when the next call is also at or beyond maxZoom
+      this.markers = [...markers];
       return {
         clusters: this.noop({ markers }),
         changed,

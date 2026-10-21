@@ -20,13 +20,17 @@ import {
   AlgorithmOptions,
   AlgorithmOutput,
 } from "./core";
+import { areMarkersEqual } from "./utils";
 
 import { Cluster } from "../cluster";
+import { Marker } from "../marker-utils";
 
 /**
  * Noop algorithm does not generate any clusters or filter markers by the an extended viewport.
  */
 export class NoopAlgorithm extends AbstractAlgorithm {
+  protected markers?: Marker[];
+
   constructor({ ...options }: AlgorithmOptions) {
     super(options);
   }
@@ -35,9 +39,14 @@ export class NoopAlgorithm extends AbstractAlgorithm {
     map,
     mapCanvasProjection,
   }: AlgorithmInput): AlgorithmOutput {
+    const changed = !areMarkersEqual(markers, this.markers);
+    if (changed) {
+      this.markers = [...markers];
+    }
+
     return {
       clusters: this.cluster({ markers, map, mapCanvasProjection }),
-      changed: false,
+      changed,
     };
   }
 
