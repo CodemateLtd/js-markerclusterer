@@ -33,36 +33,40 @@ const mapOptions: google.maps.MapOptions = {
   mapId: MAP_ID,
 };
 
+// Clusters stack above individual markers, which have no zIndex, and larger
+// clusters stack above smaller ones. 1000000 is the value of the deprecated
+// google.maps.Marker.MAX_ZINDEX, so stacking is the same as before.
+const CLUSTER_ZINDEX_BASE = 1000000;
+
 const interpolatedRenderer = {
   palette: interpolateRgb("red", "blue"),
   render: function (
     { count, position }: Cluster,
-    stats: ClusterStats
-  ): google.maps.Marker {
+    stats: ClusterStats,
+    map: google.maps.Map
+  ): google.maps.marker.AdvancedMarkerElement {
     // use d3-interpolateRgb to interpolate between red and blue
     const color = this.palette(count / stats.clusters.markers.max);
 
-    // create svg url with fill color
-    const svg = window.btoa(`
-  <svg fill="${color}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
-    <circle cx="120" cy="120" opacity=".8" r="70" />    
-  </svg>`);
+    // create a new svg element for every cluster, with fill color and count
+    // (font-size is in viewBox units: 38.4 of 240 is 12px at 75px wide)
+    const svg = new DOMParser().parseFromString(
+      `<svg fill="${color}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="75" height="75">
+    <circle cx="120" cy="120" opacity=".8" r="70" />
+    <text x="120" y="120" fill="rgba(255,255,255,0.9)" font-size="38.4" font-family="Roboto, Arial, sans-serif" text-anchor="middle" dominant-baseline="central">${count}</text>
+  </svg>`,
+      "image/svg+xml"
+    ).documentElement;
 
-    // create marker using svg icon
-    return new google.maps.Marker({
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      map,
       position,
-      icon: {
-        url: `data:image/svg+xml;base64,${svg}`,
-        scaledSize: new google.maps.Size(75, 75),
-      },
-      label: {
-        text: String(count),
-        color: "rgba(255,255,255,0.9)",
-        fontSize: "12px",
-      },
       // adjust zIndex to be above other markers
-      zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
+      zIndex: CLUSTER_ZINDEX_BASE + count,
     });
+    // child nodes replace the default pin
+    marker.append(svg);
+    return marker;
   },
 };
 
@@ -82,13 +86,28 @@ async function main() {
     [
       document.getElementById("simple")!,
       {
-        render: ({ count, position }: Cluster) =>
-          new google.maps.Marker({
-            label: { text: String(count), color: "white", fontSize: "10px" },
+        render: (
+          { count, position }: Cluster,
+          _stats: ClusterStats,
+          map: google.maps.Map
+        ) => {
+          const marker = new google.maps.marker.AdvancedMarkerElement({
+            map,
             position,
+            // the pin's glyph text is not exposed to screen readers
+            title: String(count),
             // adjust zIndex to be above other markers
-            zIndex: Number(google.maps.Marker.MAX_ZINDEX) + count,
-          }),
+            zIndex: CLUSTER_ZINDEX_BASE + count,
+          });
+          // a new pin for every cluster, labelled with the count
+          marker.append(
+            new google.maps.marker.PinElement({
+              glyphText: String(count),
+              glyphColor: "white",
+            })
+          );
+          return marker;
+        },
       },
       null,
     ],
