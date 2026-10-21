@@ -19,6 +19,7 @@ import {
   ClusterStats,
   defaultOnClusterClickHandler,
   MarkerClusterer,
+  NoopAlgorithm,
 } from ".";
 
 import {
@@ -576,6 +577,36 @@ describe.each(markerClasses)(
       expect(onMap.get(y2)).toBe(map);
       expect(onMap.get(x)).toBeNull();
       expect(onMap.get(y)).toBeNull();
+
+      setMapSpy.mockRestore();
+    });
+
+    test("markerClusterer with NoopAlgorithm draws added markers and removes cleared ones", () => {
+      const onMap = new Map<Marker, google.maps.Map | null>();
+      const setMapSpy = jest
+        .spyOn(MarkerUtils, "setMap")
+        .mockImplementation((marker, m) => void onMap.set(marker, m));
+
+      const a = new markerClass();
+      const b = new markerClass();
+      const markerClusterer = new MarkerClusterer({
+        markers: [a],
+        algorithm: new NoopAlgorithm({}),
+      });
+      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+      markerClusterer.getProjection = jest
+        .fn()
+        .mockImplementation(() => jest.fn());
+
+      markerClusterer.render();
+      expect(onMap.get(a)).toBe(map);
+
+      markerClusterer.addMarker(b);
+      expect(onMap.get(b)).toBe(map);
+
+      markerClusterer.clearMarkers();
+      expect(onMap.get(a)).toBeNull();
+      expect(onMap.get(b)).toBeNull();
 
       setMapSpy.mockRestore();
     });
