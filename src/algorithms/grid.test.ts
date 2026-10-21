@@ -121,5 +121,29 @@ describe.each(testMarkerTypes)(
 
       expect(result.changed).toBe(false);
     });
+
+    test("calculate should return changed: true at or above max zoom when the markers change", () => {
+      const mapCanvasProjection =
+        jest.fn() as unknown as google.maps.MapCanvasProjection;
+      const a = new markerClass();
+      const b = new markerClass();
+      const markers = [a];
+
+      const grid = new GridAlgorithm({ maxZoom: 16 });
+      const calculate = () =>
+        grid.calculate({ markers, map, mapCanvasProjection }).changed;
+
+      map.getZoom = jest.fn().mockReturnValue(17);
+      calculate();
+
+      markers.push(b);
+      expect(calculate()).toBe(true);
+      expect(calculate()).toBe(false);
+
+      map.getZoom = jest.fn().mockReturnValue(18);
+      markers.splice(0, markers.length);
+      expect(calculate()).toBe(true);
+      expect(calculate()).toBe(false);
+    });
   }
 );
