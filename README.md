@@ -95,7 +95,8 @@ This library has a heritage in [@google/markerclusterer][@google/markerclusterer
 - 2020 - [@googlemaps/markerclustererplus][@googlemaps/markerclustererplus] was refactored to TypeScript.
 - 2020 - [@googlemaps/markerclustererplus][@googlemaps/markerclustererplus] was moved to a separate repository.
 - 2021 - [@googlemaps/markerclustererplus][@googlemaps/markerclustererplus] was rewritten as [@googlemaps/markerclusterer (**new**)][@googlemaps/markerclusterer].
-- TBD - [@googlemaps/markerclustererplus][@googlemaps/markerclustererplus] is deprecated for [@googlemaps/markerclusterer (**new**)][@googlemaps/markerclusterer].
+
+[@googlemaps/markerclustererplus][@googlemaps/markerclustererplus] is deprecated for [@googlemaps/markerclusterer][@googlemaps/markerclusterer], and the [js-markerclustererplus repository](https://github.com/googlemaps/js-markerclustererplus) is archived.
 
 ## Migration
 
