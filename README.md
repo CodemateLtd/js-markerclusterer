@@ -101,22 +101,11 @@ This library has a heritage in [@google/markerclusterer][@google/markerclusterer
 
 The API of [@googlemaps/markerclusterer][@googlemaps/markerclusterer] has changed in a number of ways from [@googlemaps/markerclustererplus][@googlemaps/markerclustererplus].
 
-- The `MarkerClusterer` class now accepts an `algorithm` and `renderer` parameter to allow for more flexibility. The interface looks like the following:
-
-```js
-{
-    algorithm?: Algorithm;
-    map?: google.maps.Map;
-    markers?: google.maps.Marker[];
-    renderer?: Renderer;
-    onClusterClick?: onClusterClickHandler;
-  }
-```
-
+- The `MarkerClusterer` class now accepts an `algorithm` and `renderer` parameter to allow for more flexibility. See [`MarkerClustererOptions`][MarkerClustererOptions] in the [documentation] for all options and their types.
 - The `MarkerClusterer` accepts a single options argument instead of positional parameters.
 - The traditional `GridAlgorithm` is still supported, **but is not the default**. The default is [supercluster](https://npmjs.com/package/supercluster) which uses [k-d trees](https://en.wikipedia.org/wiki/K-d_tree) for improved performance.
 - Styling of clusters has been simplifed and moved to the renderer interface.
-- The `MarkerClusterer` class is still an instance of `google.maps.OverlayView`, but uses `google.maps.Marker`s instead of `google.maps.Overlay` to render the clusters. This solves issues related to the usage of map panes and click handlers.
+- The `MarkerClusterer` class is still an instance of `google.maps.OverlayView`, but uses markers instead of `google.maps.Overlay` to render the clusters: `AdvancedMarkerElement` objects, or legacy `google.maps.Marker` objects for backward compatibility. This solves issues related to the usage of map panes and click handlers.
 - @googlemaps/markerclusterer supports Marker and Map [a11y improvements](https://cloud.google.com/blog/products/maps-platform/improved-accessibility-maps-javascript-api).
 
 ## Contributing
@@ -149,6 +138,7 @@ You can also discuss this library on our [Discord server].
 [API key]: https://developers.google.com/maps/documentation/javascript/get-api-key
 [maps-sdk]: https://developers.google.com/maps/documentation/javascript
 [documentation]: https://googlemaps.github.io/js-markerclusterer
+[MarkerClustererOptions]: https://googlemaps.github.io/js-markerclusterer/interfaces/MarkerClustererOptions.html
 [npm-pkg]: https://npmjs.com/package/@googlemaps/markerclusterer
 
 [code of conduct]: ?tab=coc-ov-file#readme
