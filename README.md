@@ -145,6 +145,7 @@ You can also discuss this library on our [Discord server].
 
 [@googlemaps/markerclustererplus]: https://npmjs.com/package/@googlemaps/markerclustererplus
 [@google/markerclusterer]: https://npmjs.com/package/@google/markerclusterer
+[@googlemaps/markerclusterer]: https://npmjs.com/package/@googlemaps/markerclusterer
 
 [API key]: https://developers.google.com/maps/documentation/javascript/get-api-key
 [maps-sdk]: https://developers.google.com/maps/documentation/javascript
