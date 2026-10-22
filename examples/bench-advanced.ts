@@ -20,7 +20,7 @@ import { MarkerClusterer } from "../src";
 
 import points from "./realworld.json";
 
-// Do not set the mapId to force legacy markers
+// Set the mapId, because Advanced Markers require one
 const mapOptions: google.maps.MapOptions = {
   center: { lat: -37.89, lng: 175.46 },
   zoom: 8,
