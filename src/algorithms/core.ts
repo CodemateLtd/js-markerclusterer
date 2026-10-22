@@ -52,7 +52,19 @@ export interface AlgorithmOutput {
 
 export interface Algorithm {
   /**
-   * Calculates an array of {@link Cluster}.
+   * Clusters the markers and returns the clusters in an
+   * {@link AlgorithmOutput}.
+   *
+   * For example, an algorithm that puts each marker in its own cluster, so
+   * every marker shows unclustered:
+   *
+   * ```typescript
+   * const oneClusterPerMarker: Algorithm = {
+   *   calculate: ({ markers }) => ({
+   *     clusters: markers.map((marker) => new Cluster({ markers: [marker] })),
+   *   }),
+   * };
+   * ```
    */
   calculate: ({ markers, map }: AlgorithmInput) => AlgorithmOutput;
 }
@@ -89,7 +101,8 @@ export abstract class AbstractAlgorithm implements Algorithm {
     return noop(markers);
   }
   /**
-   * Calculates an array of {@link Cluster}. Calculate is separate from
+   * Clusters the markers and returns the clusters in an
+   * {@link AlgorithmOutput}. Calculate is separate from
    * {@link cluster} as it does preprocessing on the markers such as filtering
    * based upon the viewport as in {@link AbstractViewportAlgorithm}. Caching
    * and other optimizations can also be done here.
