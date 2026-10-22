@@ -1,10 +1,9 @@
 [![npm](https://img.shields.io/npm/v/@googlemaps/markerclusterer)][npm-pkg]
-![Release](https://github.com/googlemaps/js-markerclusterer/workflows/Release/badge.svg)
+![Release](https://github.com/googlemaps/js-markerclusterer/actions/workflows/release-please.yml/badge.svg)
 ![Stable](https://img.shields.io/badge/stability-stable-green)
 [![Tests/Build](https://github.com/googlemaps/js-markerclusterer/actions/workflows/test.yml/badge.svg)](https://github.com/googlemaps/js-markerclusterer/actions/workflows/test.yml)
 
 [![codecov](https://codecov.io/gh/googlemaps/js-markerclusterer/branch/main/graph/badge.svg)](https://codecov.io/gh/googlemaps/js-markerclusterer)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 [![solidarity](https://github.com/jpoehnelt/in-solidarity-bot/raw/main/static//badge-flat.png)](https://github.com/apps/in-solidarity)
 
 ![Contributors](https://img.shields.io/github/contributors/googlemaps/js-markerclusterer?color=green)
