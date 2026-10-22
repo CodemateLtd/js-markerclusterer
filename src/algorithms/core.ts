@@ -45,7 +45,33 @@ export interface AlgorithmOutput {
    */
   clusters: Cluster[];
   /**
-   * A boolean flag indicating that the clusters have not changed.
+   * Whether the clusters differ from the ones the previous `calculate` call
+   * returned. `true` tells the clusterer to redraw them; `false` says they are
+   * the same clusters with the same markers, so the clusterer can keep what it
+   * has drawn. If the flag is left out, the clusterer redraws, as for `true`.
+   * On the first call, return `true` or leave the flag out. Return all the
+   * clusters either way.
+   *
+   * For example, the algorithm in {@link Algorithm.calculate} can report
+   * whether its markers have changed since the last call:
+   *
+   * ```typescript
+   * let lastMarkers: Marker[] = [];
+   * const oneClusterPerMarker: Algorithm = {
+   *   calculate: ({ markers }) => {
+   *     const changed =
+   *       markers.length !== lastMarkers.length ||
+   *       markers.some((marker, i) => marker !== lastMarkers[i]);
+   *     lastMarkers = [...markers];
+   *     return {
+   *       clusters: markers.map(
+   *         (marker) => new Cluster({ markers: [marker] })
+   *       ),
+   *       changed,
+   *     };
+   *   },
+   * };
+   * ```
    */
   changed?: boolean;
 }
