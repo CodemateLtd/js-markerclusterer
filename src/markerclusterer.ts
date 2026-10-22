@@ -35,7 +35,7 @@ export interface MarkerClustererOptions {
   /**
    * An algorithm to cluster markers. Default is {@link SuperClusterAlgorithm}. Must
    * provide a `calculate` method accepting {@link AlgorithmInput} and returning
-   * an array of {@link Cluster}.
+   * an {@link AlgorithmOutput}.
    */
   algorithm?: Algorithm;
   algorithmOptions?: AlgorithmOptions;
