@@ -58,7 +58,18 @@ export interface Algorithm {
 }
 
 export interface AlgorithmOptions {
-  // Markers are not clustered at maxZoom and above.
+  /**
+   * Controls the zoom level at which markers stop being clustered. The exact
+   * cut-off depends on the algorithm.
+   *
+   * {@link GridAlgorithm} stops clustering at `maxZoom`.
+   * {@link SuperClusterAlgorithm} and {@link SuperClusterViewportAlgorithm}
+   * round the map zoom to the nearest whole number first, so they still cluster
+   * at `maxZoom` and stop only from `maxZoom + 0.5` (16.5 with the default).
+   * {@link NoopAlgorithm} never clusters and ignores this option.
+   *
+   * @default 16
+   */
   maxZoom?: number;
 }
 
