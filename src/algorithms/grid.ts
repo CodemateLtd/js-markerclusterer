@@ -34,8 +34,11 @@ import { assertNotNull } from "../utils";
 export interface GridOptions extends ViewportAlgorithmOptions {
   gridSize?: number;
   /**
-   * Max distance between cluster center and point in meters.
-   * @default 10000
+   * Max distance between cluster center and point in kilometers. The default
+   * is larger than any distance on Earth, so by default, `maxDistance` sets no
+   * limit, and a marker joins its closest cluster whenever it is within
+   * `gridSize` pixels of that cluster's bounds.
+   * @default 40000
    */
   maxDistance?: number;
 }
