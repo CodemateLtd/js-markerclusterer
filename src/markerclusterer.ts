@@ -66,6 +66,11 @@ export enum MarkerClustererEvents {
   CLUSTERING_BEGIN = "clusteringbegin",
   CLUSTERING_END = "clusteringend",
   CLUSTER_CLICK = "click",
+  /**
+   * @deprecated The clusterer never fires this event. `gmp-click` is the click
+   * event of `google.maps.marker.AdvancedMarkerElement`. Listen for
+   * {@link MarkerClustererEvents.CLUSTER_CLICK} on the clusterer instead.
+   */
   GMP_CLICK = "gmp-click",
 }
 
