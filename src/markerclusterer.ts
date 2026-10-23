@@ -293,15 +293,9 @@ export class MarkerClusterer extends OverlayViewSafe {
         if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
           // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
           cluster.marker.gmpClickable = true;
-          cluster.marker.addEventListener(
-            MarkerClustererEvents.GMP_CLICK,
-            onClusterMarkerClick
-          );
+          cluster.marker.addEventListener("gmp-click", onClusterMarkerClick);
         } else {
-          cluster.marker.addListener(
-            MarkerClustererEvents.CLUSTER_CLICK,
-            onClusterMarkerClick
-          );
+          cluster.marker.addListener("click", onClusterMarkerClick);
         }
       }
       MarkerUtils.setMap(cluster.marker, map);
