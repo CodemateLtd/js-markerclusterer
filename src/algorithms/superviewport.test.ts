@@ -96,6 +96,31 @@ describe.each(testMarkerTypes)(
       expect(clusters).toHaveLength(1);
     });
 
+    test("should reload and report changed when a marker is replaced with a new object at the same position", () => {
+      const a = new markerClass();
+      const b = new markerClass();
+
+      const superCluster = new SuperClusterViewportAlgorithm({});
+      map.getZoom = jest.fn().mockReturnValue(0);
+      setupMapBounds(map, { west: 103, south: 29, east: 34, north: -3 });
+
+      superCluster.calculate({ markers: [a, b], map, mapCanvasProjection });
+
+      const b2 = new markerClass();
+      const { clusters, changed } = superCluster.calculate({
+        markers: [a, b2],
+        map,
+        mapCanvasProjection,
+      });
+
+      const clustered = (clusters as Cluster[]).flatMap(
+        (cluster) => cluster.markers
+      );
+      expect(clustered).toContain(b2);
+      expect(clustered).not.toContain(b);
+      expect(changed).toBe(true);
+    });
+
     test("should transform to Cluster with single marker if not cluster", () => {
       const superCluster = new SuperClusterViewportAlgorithm({});
       const marker: Marker = new markerClass();

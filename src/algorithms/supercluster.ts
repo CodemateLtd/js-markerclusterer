@@ -51,6 +51,7 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
   public calculate(input: AlgorithmInput): AlgorithmOutput {
     let inputsChanged = false;
+    let markersChanged = false;
     let zoom = input.map.getZoom();
 
     assertNotNull(zoom);
@@ -61,6 +62,7 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
     if (!areMarkersEqual(input.markers, this.markers)) {
       inputsChanged = true;
+      markersChanged = true;
 
       this.markers = [...input.markers];
 
@@ -96,7 +98,8 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
     if (inputsChanged) {
       const newClusters = this.cluster(input);
 
-      clustersChanged = !areClustersEqual(this.clusters, newClusters);
+      clustersChanged =
+        markersChanged || !areClustersEqual(this.clusters, newClusters);
 
       this.clusters = newClusters;
     }

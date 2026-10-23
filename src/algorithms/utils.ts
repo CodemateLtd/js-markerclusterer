@@ -185,12 +185,7 @@ export const areMarkersEqual = (markersA?: Marker[], markersB?: Marker[]) => {
   if (markersA.length !== markersB.length) return false;
 
   for (let i = 0; i < markersA.length; i++) {
-    if (markersA[i] !== markersB[i]) {
-      const posA = MarkerUtils.getPosition(markersA[i]);
-      const posB = MarkerUtils.getPosition(markersB[i]);
-
-      if (!posA.equals(posB)) return false;
-    }
+    if (markersA[i] !== markersB[i]) return false;
   }
 
   return true;
