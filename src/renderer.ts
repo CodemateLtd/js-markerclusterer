@@ -53,6 +53,14 @@ export interface Renderer {
   /**
    * Turn a {@link Cluster} into a `Marker`.
    *
+   * Return a new marker on every call. The {@link MarkerClusterer} adds its
+   * own click listener to each marker `render` returns, and removes the
+   * previous render's cluster markers from the map shortly after drawing the
+   * new ones. A marker returned again therefore collects one more listener
+   * each time, so a click fires the clusterer's `click` event and any
+   * `onClusterClick` once per listener. If the previous render also returned
+   * it, the marker disappears from the map.
+   *
    * Below is a simple example to create an Advanced Marker with the number
    * of markers in the cluster as a label. A legacy `google.maps.Marker` is
    * also accepted for backward compatibility.
