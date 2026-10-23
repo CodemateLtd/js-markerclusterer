@@ -519,3 +519,12 @@ describe.each(markerClasses)(
     });
   }
 );
+
+test("markerClusterer default algorithm rejects a maxZoom that is not a whole number", () => {
+  const construct = () =>
+    new MarkerClusterer({ algorithmOptions: { maxZoom: 15.5 } });
+
+  expect(construct).toThrow(RangeError);
+  expect(construct).toThrow("maxZoom");
+  expect(construct).toThrow("got 15.5");
+});

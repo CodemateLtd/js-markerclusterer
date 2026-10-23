@@ -29,3 +29,20 @@ export function assertNotNull<TValue>(
     throw Error(message);
   }
 }
+
+/**
+ * Throws a `RangeError` unless the supercluster library can build an index for
+ * `maxZoom`. The library caps `maxZoom` at 30 and sizes an array from the
+ * result, so the capped value has to be a whole number of -1 or more.
+ *
+ * @param maxZoom
+ */
+export function assertSuperClusterMaxZoom(maxZoom: number): void {
+  const cappedMaxZoom = Math.min(maxZoom, 30);
+  if (!Number.isInteger(cappedMaxZoom) || cappedMaxZoom < -1) {
+    throw new RangeError(
+      "maxZoom must be a whole number of -1 or more (values above 30 are " +
+        `treated as 30); got ${maxZoom}`
+    );
+  }
+}
