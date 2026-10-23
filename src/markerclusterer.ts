@@ -66,6 +66,11 @@ export enum MarkerClustererEvents {
   CLUSTERING_BEGIN = "clusteringbegin",
   CLUSTERING_END = "clusteringend",
   CLUSTER_CLICK = "click",
+  /**
+   * @deprecated The clusterer never fires this event. `gmp-click` is the click
+   * event of `google.maps.marker.AdvancedMarkerElement`. Listen for
+   * {@link MarkerClustererEvents.CLUSTER_CLICK} on the clusterer instead.
+   */
   GMP_CLICK = "gmp-click",
 }
 
@@ -293,15 +298,9 @@ export class MarkerClusterer extends OverlayViewSafe {
         if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
           // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
           cluster.marker.gmpClickable = true;
-          cluster.marker.addEventListener(
-            MarkerClustererEvents.GMP_CLICK,
-            onClusterMarkerClick
-          );
+          cluster.marker.addEventListener("gmp-click", onClusterMarkerClick);
         } else {
-          cluster.marker.addListener(
-            MarkerClustererEvents.CLUSTER_CLICK,
-            onClusterMarkerClick
-          );
+          cluster.marker.addListener("click", onClusterMarkerClick);
         }
       }
       MarkerUtils.setMap(cluster.marker, map);
