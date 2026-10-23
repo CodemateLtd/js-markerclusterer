@@ -43,7 +43,8 @@ export interface MarkerClustererOptions {
   /**
    * An object that converts a {@link Cluster} into a {@link Marker}: an
    * `AdvancedMarkerElement`, or a legacy `google.maps.Marker` for backward
-   * compatibility. Default is {@link DefaultRenderer}.
+   * compatibility. Default is {@link DefaultRenderer}. Its `render` method must
+   * return a new marker on every call; see {@link Renderer.render}.
    */
   renderer?: Renderer;
   onClusterClick?: onClusterClickHandler;
