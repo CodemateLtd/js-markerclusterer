@@ -18,7 +18,7 @@ import { deepEqual } from "fast-equals";
 import { AbstractAlgorithm, AlgorithmInput, AlgorithmOutput } from "./core";
 import { MarkerUtils, Marker } from "../marker-utils";
 import { Cluster } from "../cluster";
-import { assertNotNull } from "../utils";
+import { assertNotNull, assertSuperClusterMaxZoom } from "../utils";
 import { areClustersEqual, areMarkersEqual } from "./utils";
 
 export type SuperClusterOptions = SuperCluster.Options<
@@ -41,6 +41,7 @@ export class SuperClusterAlgorithm extends AbstractAlgorithm {
 
   constructor({ maxZoom, radius = 60, ...options }: SuperClusterOptions) {
     super({ maxZoom });
+    assertSuperClusterMaxZoom(this.maxZoom);
 
     this.superCluster = new SuperCluster({
       maxZoom: this.maxZoom,

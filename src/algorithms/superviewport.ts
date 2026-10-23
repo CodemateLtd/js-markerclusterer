@@ -25,7 +25,7 @@ import SuperCluster, { ClusterFeature } from "supercluster";
 import { MarkerUtils, Marker } from "../marker-utils";
 import { Cluster } from "../cluster";
 import { areClustersEqual, areMarkersEqual, getPaddedViewport } from "./utils";
-import { assertNotNull } from "../utils";
+import { assertNotNull, assertSuperClusterMaxZoom } from "../utils";
 
 export interface SuperClusterViewportOptions
   extends SuperClusterOptions, ViewportAlgorithmOptions {}
@@ -56,6 +56,7 @@ export class SuperClusterViewportAlgorithm extends AbstractViewportAlgorithm {
     ...options
   }: SuperClusterViewportOptions) {
     super({ maxZoom, viewportPadding });
+    assertSuperClusterMaxZoom(this.maxZoom);
 
     this.superCluster = new SuperCluster({
       maxZoom: this.maxZoom,

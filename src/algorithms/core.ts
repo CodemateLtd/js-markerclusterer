@@ -62,10 +62,12 @@ export interface AlgorithmOptions {
    * Controls the zoom level at which markers stop being clustered. The exact
    * cut-off depends on the algorithm.
    *
-   * {@link GridAlgorithm} stops clustering at `maxZoom`.
+   * {@link GridAlgorithm} stops clustering at `maxZoom` and accepts any number.
    * {@link SuperClusterAlgorithm} and {@link SuperClusterViewportAlgorithm}
    * round the map zoom to the nearest whole number first, so they still cluster
    * at `maxZoom` and stop only from `maxZoom + 0.5` (16.5 with the default).
+   * They accept a whole number of -1 or more, or any value of 30 or more,
+   * which they treat as 30. They throw a `RangeError` for any other value.
    * {@link NoopAlgorithm} never clusters and ignores this option.
    *
    * @default 16

@@ -343,3 +343,22 @@ describe.each(testMarkerTypes)(
     });
   }
 );
+
+describe("SuperClusterViewportAlgorithm maxZoom", () => {
+  test.each([15.5, NaN, -2, -Infinity])("should reject %p", (maxZoom) => {
+    const construct = () => new SuperClusterViewportAlgorithm({ maxZoom });
+
+    expect(construct).toThrow(RangeError);
+    expect(construct).toThrow("maxZoom");
+    expect(construct).toThrow(`got ${maxZoom}`);
+  });
+
+  test.each([undefined, -1, 0, 16, 30, 30.5, 31, Infinity])(
+    "should accept %p",
+    (maxZoom) => {
+      expect(
+        () => new SuperClusterViewportAlgorithm({ maxZoom })
+      ).not.toThrow();
+    }
+  );
+});
