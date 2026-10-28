@@ -57,19 +57,22 @@ export const sync = (...maps: google.maps.Map[]): void => {
   });
 };
 
-// Creates a marker.
+// Creates an Advanced Marker.
 //
-// Prefers advanced markers when they are available.
+// Throws instead of falling back to the deprecated google.maps.Marker, so a
+// map missing Advanced Marker support fails loudly with an actionable
+// message rather than silently teaching the deprecated API.
 export function createMarker(map: google.maps.Map, lat: number, lng: number) {
-  if (MarkerUtils.isAdvancedMarkerAvailable(map)) {
-    return new google.maps.marker.AdvancedMarkerElement({
-      map,
-      position: { lat, lng },
-    });
+  if (!MarkerUtils.isAdvancedMarkerAvailable(map)) {
+    throw new Error(
+      "Advanced Markers are not available for this map. Use a Map ID with " +
+        "Advanced Markers enabled: " +
+        "https://developers.google.com/maps/documentation/javascript/advanced-markers/migration"
+    );
   }
 
-  return new google.maps.Marker({
-    position: { lat, lng },
+  return new google.maps.marker.AdvancedMarkerElement({
     map,
+    position: { lat, lng },
   });
 }
