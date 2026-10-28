@@ -25,8 +25,17 @@ import { OverlayViewSafe } from "./overlay-view-safe";
 import { MarkerUtils, Marker } from "./marker-utils";
 import { assertNotNull } from "./utils";
 
+/**
+ * Called when a cluster marker is clicked. A legacy `google.maps.Marker`
+ * passes a `google.maps.MapMouseEvent`. A
+ * `google.maps.marker.AdvancedMarkerElement` passes a
+ * `google.maps.marker.AdvancedMarkerClickEvent`, which has no `latLng`; use
+ * `cluster.position` instead.
+ */
 export type onClusterClickHandler = (
-  event: google.maps.MapMouseEvent,
+  event:
+    | google.maps.MapMouseEvent
+    | google.maps.marker.AdvancedMarkerClickEvent,
   cluster: Cluster,
   map: google.maps.Map
 ) => void;
@@ -45,18 +54,28 @@ export interface MarkerClustererOptions {
    * Default is {@link DefaultRenderer}.
    */
   renderer?: Renderer;
-  onClusterClick?: onClusterClickHandler;
+  /**
+   * Called when a cluster marker is clicked. Default fits the map to the
+   * cluster's bounds. Pass `null` to turn that off; the clusterer still
+   * fires its own `click` event ({@link MarkerClustererEvents.CLUSTER_CLICK}).
+   */
+  onClusterClick?: onClusterClickHandler | null;
 }
 
 export enum MarkerClustererEvents {
   CLUSTERING_BEGIN = "clusteringbegin",
   CLUSTERING_END = "clusteringend",
   CLUSTER_CLICK = "click",
+  /**
+   * @deprecated The clusterer never fires this event. `gmp-click` is the click
+   * event of `google.maps.marker.AdvancedMarkerElement`. Listen for
+   * {@link MarkerClustererEvents.CLUSTER_CLICK} on the clusterer instead.
+   */
   GMP_CLICK = "gmp-click",
 }
 
 export const defaultOnClusterClickHandler: onClusterClickHandler = (
-  _: google.maps.MapMouseEvent,
+  _: google.maps.MapMouseEvent | google.maps.marker.AdvancedMarkerClickEvent,
   cluster: Cluster,
   map: google.maps.Map
 ): void => {
@@ -69,7 +88,7 @@ export const defaultOnClusterClickHandler: onClusterClickHandler = (
  */
 export class MarkerClusterer extends OverlayViewSafe {
   /** @see {@link MarkerClustererOptions.onClusterClick} */
-  public onClusterClick: onClusterClickHandler;
+  public onClusterClick: onClusterClickHandler | null;
   /** @see {@link MarkerClustererOptions.algorithm} */
   protected algorithm: Algorithm;
   protected clusters: Cluster[];
@@ -261,26 +280,27 @@ export class MarkerClusterer extends OverlayViewSafe {
         cluster.marker = this.renderer.render(cluster, stats, map);
         // Make sure all individual markers are removed from the map.
         cluster.markers.forEach((marker) => MarkerUtils.setMap(marker, null));
-        if (this.onClusterClick) {
-          // legacy Marker uses 'click' events, whereas AdvancedMarkerElement uses 'gmp-click'
-          const markerClickEventName = MarkerUtils.isAdvancedMarker(
-            cluster.marker
-          )
-            ? MarkerClustererEvents.GMP_CLICK
-            : MarkerClustererEvents.CLUSTER_CLICK;
-
-          cluster.marker.addListener(
-            markerClickEventName,
-            /* istanbul ignore next */
-            (event: google.maps.MapMouseEvent) => {
-              google.maps.event.trigger(
-                this,
-                MarkerClustererEvents.CLUSTER_CLICK,
-                cluster
-              );
-              this.onClusterClick(event, cluster, map);
-            }
+        const onClusterMarkerClick = (
+          event:
+            | google.maps.MapMouseEvent
+            | google.maps.marker.AdvancedMarkerClickEvent
+        ) => {
+          google.maps.event.trigger(
+            this,
+            MarkerClustererEvents.CLUSTER_CLICK,
+            cluster
           );
+          if (this.onClusterClick) this.onClusterClick(event, cluster, map);
+        };
+
+        // legacy Marker uses 'click' events with addListener, whereas
+        // AdvancedMarkerElement uses 'gmp-click' with addEventListener
+        if (MarkerUtils.isAdvancedMarker(cluster.marker)) {
+          // AdvancedMarkerElement only triggers 'gmp-click' when gmpClickable is set
+          cluster.marker.gmpClickable = true;
+          cluster.marker.addEventListener("gmp-click", onClusterMarkerClick);
+        } else {
+          cluster.marker.addListener("click", onClusterMarkerClick);
         }
       }
       MarkerUtils.setMap(cluster.marker, map);

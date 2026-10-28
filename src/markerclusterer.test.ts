@@ -19,6 +19,7 @@ import {
   ClusterStats,
   defaultOnClusterClickHandler,
   MarkerClusterer,
+  onClusterClickHandler,
 } from ".";
 
 import {
@@ -260,11 +261,16 @@ describe.each(markerClasses)(
 
       clusters.forEach((cluster) => {
         expect(MarkerUtils.setMap).toHaveBeenCalledWith(cluster.marker, map);
-        expect(cluster.marker?.addListener).toHaveBeenCalledWith(
-          // legacy Marker uses 'click' events, whereas AdvancedMarkerElement uses 'gmp-click'
-          MarkerUtils.isAdvancedMarker(cluster.marker!) ? "gmp-click" : "click",
-          expect.any(Function)
-        );
+        if (MarkerUtils.isAdvancedMarker(cluster.marker!)) {
+          // AdvancedMarkerElement uses 'gmp-click' with addEventListener; see
+          // "MarkerClusterer cluster clicks" below.
+          expect(cluster.marker.addListener).not.toHaveBeenCalled();
+        } else {
+          expect(cluster.marker?.addListener).toHaveBeenCalledWith(
+            "click",
+            expect.any(Function)
+          );
+        }
       });
 
       expect(renderer.render).toHaveBeenCalledWith(
@@ -294,24 +300,9 @@ describe.each(markerClasses)(
       expect(MarkerUtils.setMap).toHaveBeenCalledWith(marker2, null);
     });
 
-    test("markerClusterer renderClusters does not set click handler", () => {
-      const markers: Marker[] = [new markerClass()];
-
-      const markerClusterer = new MarkerClusterer({
-        markers,
-        onClusterClick: undefined,
-      });
-
-      markerClusterer.getMap = jest.fn().mockImplementation(() => map);
-
-      const clusters = [new Cluster({ markers }), new Cluster({ markers })];
-
-      markerClusterer["clusters"] = clusters;
-      markerClusterer["renderClusters"]();
-
-      clusters.forEach((cluster) => {
-        expect(cluster.marker?.addListener).toHaveBeenCalledTimes(0);
-      });
+    test("markerClusterer accepts onClusterClick: null without a cast", () => {
+      const markerClusterer = new MarkerClusterer({ onClusterClick: null });
+      expect(markerClusterer.onClusterClick).toBeNull();
     });
 
     test("markerClusterer onAdd calls render and sets listener", () => {
@@ -519,3 +510,158 @@ describe.each(markerClasses)(
     });
   }
 );
+
+describe("MarkerClusterer cluster clicks", () => {
+  let map: google.maps.Map;
+
+  beforeEach(() => {
+    map = new google.maps.Map(document.createElement("div"));
+  });
+
+  // Renders a single cluster of two markers, drawn as `clusterMarker`.
+  const renderCluster = (
+    clusterMarker: Marker,
+    onClusterClick: onClusterClickHandler | null
+  ) => {
+    const cluster = new Cluster({
+      markers: [new google.maps.Marker(), new google.maps.Marker()],
+    });
+    const markerClusterer = new MarkerClusterer({
+      algorithm: {
+        calculate: jest.fn().mockReturnValue({ clusters: [cluster] }),
+      },
+      renderer: { render: () => clusterMarker },
+      onClusterClick,
+    });
+    markerClusterer.getMap = jest.fn().mockImplementation(() => map);
+    markerClusterer.getProjection = jest.fn();
+    markerClusterer.render();
+
+    return { markerClusterer, cluster };
+  };
+
+  test("legacy Marker cluster passes the click's MapMouseEvent to onClusterClick", () => {
+    const clusterMarker = new google.maps.Marker();
+    const onClusterClick = jest.fn();
+    const { markerClusterer, cluster } = renderCluster(
+      clusterMarker,
+      onClusterClick
+    );
+
+    const [[eventName, handler]] = jest.mocked(clusterMarker.addListener).mock
+      .calls;
+    expect(eventName).toBe("click");
+
+    const event = {
+      latLng: new google.maps.LatLng(1, 2),
+    } as google.maps.MapMouseEvent;
+    handler(event);
+
+    expect(onClusterClick).toHaveBeenCalledWith(event, cluster, map);
+    expect(google.maps.event.trigger).toHaveBeenCalledWith(
+      markerClusterer,
+      "click",
+      cluster
+    );
+  });
+
+  test("Advanced Marker cluster is made clickable for onClusterClick", () => {
+    // A custom renderer that leaves gmpClickable unset.
+    const clusterMarker = new google.maps.marker.AdvancedMarkerElement();
+    renderCluster(clusterMarker, jest.fn());
+
+    expect(clusterMarker.gmpClickable).toBe(true);
+  });
+
+  test("default click handler accepts the Advanced Marker click event", () => {
+    const event: google.maps.marker.AdvancedMarkerClickEvent = new Event(
+      "gmp-click"
+    );
+    const cluster = new Cluster({
+      markers: [],
+      position: new google.maps.LatLng(0, 0),
+    });
+    const bounds = new google.maps.LatLngBounds();
+    jest.spyOn(cluster, "bounds", "get").mockImplementation(() => bounds);
+
+    defaultOnClusterClickHandler(event, cluster, map);
+
+    expect(map.fitBounds).toHaveBeenCalledWith(bounds);
+  });
+
+  test("Advanced Marker cluster passes gmp-click from addEventListener to onClusterClick", () => {
+    const clusterMarker = new google.maps.marker.AdvancedMarkerElement();
+    const onClusterClick = jest.fn();
+    const { markerClusterer, cluster } = renderCluster(
+      clusterMarker,
+      onClusterClick
+    );
+
+    const event: google.maps.marker.AdvancedMarkerClickEvent = new Event(
+      "gmp-click"
+    );
+    clusterMarker.dispatchEvent(event);
+
+    expect(onClusterClick).toHaveBeenCalledWith(event, cluster, map);
+    expect(google.maps.event.trigger).toHaveBeenCalledWith(
+      markerClusterer,
+      "click",
+      cluster
+    );
+    // addListener with 'gmp-' events is deprecated and logs a warning.
+    expect(clusterMarker.addListener).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["null", null],
+    ["false", false],
+  ])(
+    "legacy Marker cluster still fires the clusterer's click event when onClusterClick is %s",
+    (_label, onClusterClick) => {
+      const clusterMarker = new google.maps.Marker();
+      const { markerClusterer, cluster } = renderCluster(
+        clusterMarker,
+        onClusterClick as unknown as onClusterClickHandler
+      );
+
+      const [[eventName, handler]] = jest.mocked(clusterMarker.addListener).mock
+        .calls;
+      expect(eventName).toBe("click");
+
+      handler({} as google.maps.MapMouseEvent);
+
+      expect(google.maps.event.trigger).toHaveBeenCalledWith(
+        markerClusterer,
+        "click",
+        cluster
+      );
+    }
+  );
+
+  test.each([
+    ["null", null],
+    ["false", false],
+  ])(
+    "Advanced Marker cluster is still made clickable and fires the clusterer's click event when onClusterClick is %s",
+    (_label, onClusterClick) => {
+      const clusterMarker = new google.maps.marker.AdvancedMarkerElement();
+      const { markerClusterer, cluster } = renderCluster(
+        clusterMarker,
+        onClusterClick as unknown as onClusterClickHandler
+      );
+
+      expect(clusterMarker.gmpClickable).toBe(true);
+
+      const event: google.maps.marker.AdvancedMarkerClickEvent = new Event(
+        "gmp-click"
+      );
+      clusterMarker.dispatchEvent(event);
+
+      expect(google.maps.event.trigger).toHaveBeenCalledWith(
+        markerClusterer,
+        "click",
+        cluster
+      );
+    }
+  );
+});
