@@ -21,7 +21,13 @@ import {
   NoopAlgorithm,
   SuperClusterAlgorithm,
 } from "../src";
-import { MAP_ID, createMarker, getLoaderOptions, sync } from "./config";
+import {
+  MAP_ID,
+  createMarker,
+  getLoaderOptions,
+  showError,
+  sync,
+} from "./config";
 
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import trees from "./trees.json";
@@ -82,4 +88,4 @@ async function main() {
   sync(...maps);
 }
 
-main().catch((err) => console.error(err));
+main().catch(showError);

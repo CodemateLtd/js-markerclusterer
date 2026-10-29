@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getLoaderOptions } from "./config";
+import { getLoaderOptions, showError } from "./config";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { MarkerClusterer, SuperClusterViewportAlgorithm } from "../src";
 import points from "./realworld.json";
@@ -50,4 +50,4 @@ async function main() {
   markerCluster.setMap(map);
 }
 
-main().catch((err) => console.error(err));
+main().catch(showError);

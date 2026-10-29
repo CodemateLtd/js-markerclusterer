@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { MAP_ID, getLoaderOptions } from "./config";
+import { MAP_ID, getLoaderOptions, showError } from "./config";
 import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { MarkerClusterer } from "../src";
 
@@ -54,4 +54,4 @@ async function main() {
   markerCluster.setMap(map);
 }
 
-main().catch((err) => console.error(err));
+main().catch(showError);
