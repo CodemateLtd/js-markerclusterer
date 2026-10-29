@@ -76,3 +76,48 @@ export function createMarker(map: google.maps.Map, lat: number, lng: number) {
     position: { lat, lng },
   });
 }
+
+// Logs an error that stopped an example from starting and shows it at the
+// top of the page, so a failed load doesn't leave a blank map. All text is
+// set with textContent, so nothing in the error is parsed as HTML.
+export function showError(error: unknown): void {
+  console.error(error);
+
+  const message = error instanceof Error ? error.message : String(error);
+
+  const summary = document.createElement("strong");
+  summary.textContent = `This example could not start: ${message}`;
+
+  const networkHint = document.createElement("p");
+  networkHint.textContent =
+    "If the Maps JavaScript API could not load, check the network " +
+    "connection and that no content blocker is blocking maps.googleapis.com.";
+
+  const indexLink = document.createElement("a");
+  indexLink.href = "../index.html";
+  indexLink.textContent = "examples index page";
+
+  const errorsLink = document.createElement("a");
+  errorsLink.href =
+    "https://developers.google.com/maps/documentation/javascript/error-messages";
+  errorsLink.textContent = "Maps JavaScript API error messages";
+
+  const setupHint = document.createElement("p");
+  setupHint.append(
+    "Problems with the API key, billing, or the key's website restrictions " +
+      "are reported in the browser console as errors ending in MapError. " +
+      "Enter your own key on the ",
+    indexLink,
+    ", and see ",
+    errorsLink,
+    "."
+  );
+
+  const errorBox = document.createElement("div");
+  errorBox.setAttribute("role", "alert");
+  errorBox.style.cssText =
+    "margin: 12px; padding: 1rem; border: 1px solid #c5221f; " +
+    "background-color: #fce8e6; color: #333333; font-family: sans-serif;";
+  errorBox.append(summary, networkHint, setupHint);
+  document.body.prepend(errorBox);
+}
