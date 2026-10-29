@@ -84,6 +84,22 @@ async function main() {
     }, 2000);
   });
 
+  // Batch several updates into one redraw. Each update method calls render()
+  // after changing the marker list unless its noDraw argument is true, and
+  // render() reclusters all markers and redraws the clusters. Passing true and
+  // calling render() once does that work once instead of after every update.
+  // If render() is not called, the map keeps showing the old clusters until
+  // the clusterer redraws on its own at the next map idle event, such as after
+  // a pan or zoom.
+  await new Promise((resolve) => {
+    setTimeout(() => {
+      markerCluster.clearMarkers(true);
+      markerCluster.addMarkers(markers.slice(0, markers.length / 2), true);
+      markerCluster.render();
+      resolve(null);
+    }, 2000);
+  });
+
   await new Promise((resolve) => {
     setTimeout(() => {
       markerCluster.removeMarkers(markers);
