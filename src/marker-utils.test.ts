@@ -80,3 +80,46 @@ describe.each(testMarkerTypes)(
     });
   }
 );
+
+describe("MarkerUtils.isAdvancedMarkerAvailable", () => {
+  let map: google.maps.Map;
+
+  const setAdvancedMarkersAvailable = (isAvailable: boolean) => {
+    map.getMapCapabilities = jest.fn().mockReturnValue({
+      isAdvancedMarkersAvailable: isAvailable,
+      isDataDrivenStylingAvailable: false,
+    });
+  };
+
+  beforeEach(() => {
+    map = new google.maps.Map(document.createElement("div"));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  test("is true when the map supports Advanced Markers", () => {
+    setAdvancedMarkersAvailable(true);
+
+    expect(MarkerUtils.isAdvancedMarkerAvailable(map)).toBe(true);
+  });
+
+  test("is false when the map does not support Advanced Markers", () => {
+    setAdvancedMarkersAvailable(false);
+
+    expect(MarkerUtils.isAdvancedMarkerAvailable(map)).toBe(false);
+  });
+
+  test("is falsy when the marker library is not loaded", () => {
+    // the map's capability alone must not enable Advanced Markers
+    setAdvancedMarkersAvailable(true);
+    jest.replaceProperty(
+      google.maps,
+      "marker",
+      undefined as unknown as typeof google.maps.marker
+    );
+
+    expect(MarkerUtils.isAdvancedMarkerAvailable(map)).toBeFalsy();
+  });
+});
