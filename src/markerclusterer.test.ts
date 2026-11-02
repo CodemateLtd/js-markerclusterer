@@ -23,9 +23,18 @@ import {
 
 import {
   initializeMocks,
+  setupMapBounds,
   testMarkerTypes as markerClasses,
 } from "./test-helpers";
 import { Marker, MarkerUtils } from "./marker-utils";
+import { MapCanvasProjection } from "@googlemaps/jest-mocks";
+import * as algorithmUtils from "./algorithms/utils";
+import {
+  Algorithm,
+  GridAlgorithm,
+  SuperClusterAlgorithm,
+  SuperClusterViewportAlgorithm,
+} from "./algorithms";
 
 initializeMocks();
 
@@ -120,23 +129,198 @@ describe.each(markerClasses)(
       expect(markerClusterer["renderClusters"]).toHaveBeenCalledTimes(0);
     });
 
-    test("markerClusterer reset calls delete and setMap null", () => {
-      const marker = new markerClass();
-      const markers: Marker[] = [marker];
+    test("markerClusterer reset takes everything off the map and keeps cluster markers", () => {
+      const single = new markerClass();
+      const grouped = [new markerClass(), new markerClass()];
+      const markers: Marker[] = [single, ...grouped];
 
       const markerClusterer = new MarkerClusterer({
         markers,
       });
-      const clusters = [new Cluster({ markers })];
-      const deleteSpy = jest.spyOn(clusters[0], "delete");
+      const singleCluster = new Cluster({ markers: [single] });
+      singleCluster.marker = single;
+      // The cluster keeps the array it is given, so hand it a copy to compare
+      // against.
+      const groupCluster = new Cluster({ markers: [...grouped] });
+      const groupIcon = new markerClass();
+      groupCluster.marker = groupIcon;
 
       MarkerUtils.setMap = jest.fn().mockImplementation(() => null);
 
-      markerClusterer["clusters"] = clusters;
+      markerClusterer["clusters"] = [singleCluster, groupCluster];
       markerClusterer["reset"]();
 
-      expect(MarkerUtils.setMap).toHaveBeenCalledWith(marker, null);
-      expect(deleteSpy).toHaveBeenCalledTimes(1);
+      // The mock markers are deep-equal to each other, so match by identity.
+      const takenOff = (marker: Marker) =>
+        (MarkerUtils.setMap as jest.Mock).mock.calls.some(
+          ([m, map]) => m === marker && map === null
+        );
+      markers.forEach((marker) => expect(takenOff(marker)).toBe(true));
+      expect(takenOff(groupIcon)).toBe(true);
+      expect(singleCluster.markers).toHaveLength(1);
+      expect(singleCluster.markers[0]).toBe(single);
+      expect(groupCluster.markers).toHaveLength(grouped.length);
+      grouped.forEach((marker, i) =>
+        expect(groupCluster.markers[i]).toBe(marker)
+      );
+      expect(markerClusterer["clusters"]).toEqual([]);
+    });
+
+    describe("when taken off the map and put back", () => {
+      const singles: [number, number][] = [
+        [0, 0],
+        [10, 10],
+      ];
+      const group: [number, number][] = [
+        [0, 0],
+        [0.001, 0.001],
+      ];
+      const cases: [string, () => Algorithm, number, [number, number][]][] = [
+        ["GridAlgorithm at maxZoom", () => new GridAlgorithm({}), 17, singles],
+        [
+          "SuperClusterAlgorithm, single markers",
+          () => new SuperClusterAlgorithm({}),
+          6,
+          singles,
+        ],
+        [
+          "SuperClusterAlgorithm, one group",
+          () => new SuperClusterAlgorithm({}),
+          6,
+          group,
+        ],
+        [
+          "SuperClusterViewportAlgorithm, single markers",
+          () => new SuperClusterViewportAlgorithm({}),
+          6,
+          singles,
+        ],
+        [
+          "SuperClusterViewportAlgorithm, one group",
+          () => new SuperClusterViewportAlgorithm({}),
+          6,
+          group,
+        ],
+      ];
+
+      let onMap: Map<Marker, google.maps.Map | null>;
+      let setMapSpy: jest.SpyInstance;
+      let viewportSpy: jest.SpyInstance;
+      let zoomedMap: google.maps.Map;
+      let projection: MapCanvasProjection;
+
+      const makeMarkerAt = ([lat, lng]: [number, number]): Marker => {
+        const marker = new markerClass();
+        if (MarkerUtils.isAdvancedMarker(marker)) {
+          marker.position = { lat, lng };
+        } else {
+          (marker as google.maps.Marker).getPosition = jest
+            .fn()
+            .mockReturnValue(new google.maps.LatLng(lat, lng));
+        }
+        return marker;
+      };
+      const visible = () =>
+        [...onMap].filter(([, m]) => m === zoomedMap).map(([marker]) => marker);
+
+      beforeEach(() => {
+        onMap = new Map();
+        setMapSpy = jest
+          .spyOn(MarkerUtils, "setMap")
+          .mockImplementation((marker, m) => void onMap.set(marker, m));
+        // The mocked LatLngBounds ignores its arguments, so give the viewport
+        // algorithm a view that contains every marker.
+        viewportSpy = jest
+          .spyOn(algorithmUtils, "getPaddedViewport")
+          .mockReturnValue([-20, -20, 20, 20]);
+        zoomedMap = new google.maps.Map(document.createElement("div"));
+        zoomedMap.getProjection = jest.fn().mockReturnValue({});
+        setupMapBounds(zoomedMap, {
+          west: -20,
+          south: -20,
+          east: 20,
+          north: 20,
+        });
+        projection = new MapCanvasProjection();
+        projection.fromLatLngToDivPixel = jest
+          .fn()
+          .mockImplementation((latLng: google.maps.LatLng) => ({
+            x: latLng.lng() * 100,
+            y: latLng.lat() * 100,
+          }));
+        projection.fromDivPixelToLatLng = jest
+          .fn()
+          .mockImplementation((point: google.maps.Point) => ({
+            lat: () => point.y / 100,
+            lng: () => point.x / 100,
+          }));
+      });
+
+      afterEach(() => {
+        setMapSpy.mockRestore();
+        viewportSpy.mockRestore();
+      });
+
+      test.each(cases)(
+        "markerClusterer onAdd after onRemove draws again and later renders do not: %s",
+        (_, makeAlgorithm, zoom, positions) => {
+          zoomedMap.getZoom = jest.fn().mockReturnValue(zoom);
+          const markers = positions.map(makeMarkerAt);
+          const markerClusterer = new MarkerClusterer({
+            markers,
+            algorithm: makeAlgorithm(),
+            renderer,
+          });
+          markerClusterer.getMap = jest.fn().mockReturnValue(zoomedMap);
+          markerClusterer.getProjection = jest.fn().mockReturnValue(projection);
+
+          markerClusterer.onAdd();
+          const first = visible();
+          markerClusterer.onRemove();
+          const removed = visible();
+          markerClusterer.onAdd();
+          const readded = visible();
+
+          expect(first.length).toBeGreaterThan(0);
+          expect(removed).toEqual([]);
+          // A group's icon is a new marker on every draw, so compare the
+          // members by identity and the rest by count.
+          expect(readded.length).toBe(first.length);
+          expect(markers.map((m) => readded.includes(m))).toEqual(
+            markers.map((m) => first.includes(m))
+          );
+
+          // The forced draw is a one-off: the next idle render leaves the map
+          // alone.
+          setMapSpy.mockClear();
+          markerClusterer.render();
+          expect(setMapSpy).not.toHaveBeenCalled();
+        }
+      );
+
+      test("markerClusterer render after a re-add without a projection draws once there is one", () => {
+        zoomedMap.getZoom = jest.fn().mockReturnValue(6);
+        const markers = singles.map(makeMarkerAt);
+        const markerClusterer = new MarkerClusterer({
+          markers,
+          algorithm: new SuperClusterAlgorithm({}),
+          renderer,
+        });
+        markerClusterer.getMap = jest.fn().mockReturnValue(zoomedMap);
+        markerClusterer.getProjection = jest.fn().mockReturnValue(projection);
+
+        markerClusterer.onAdd();
+        markerClusterer.onRemove();
+
+        (zoomedMap.getProjection as jest.Mock).mockReturnValue(null);
+        markerClusterer.onAdd();
+        expect(visible()).toEqual([]);
+
+        (zoomedMap.getProjection as jest.Mock).mockReturnValue({});
+        markerClusterer.render();
+        expect(visible()).toHaveLength(markers.length);
+        markers.forEach((marker) => expect(visible()).toContain(marker));
+      });
     });
 
     test("markerClusterer render should not remove markers from the map if they were already rendered", () => {
