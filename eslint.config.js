@@ -1,3 +1,4 @@
+const globals = require("globals");
 const gts = require("gts");
 
 module.exports = [
@@ -21,6 +22,15 @@ module.exports = [
       eqeqeq: ["error", "always"],
     },
   })),
+  {
+    files: ["e2e/**/*"],
+    languageOptions: {
+      globals: globals.node,
+      parserOptions: {
+        project: "./e2e/tsconfig.json",
+      },
+    },
+  },
   {
     files: ["**/*.test.ts"],
     rules: {
