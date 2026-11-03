@@ -47,3 +47,7 @@
 ### Bug Fixes
 
 * trigger release-please ([90ccc3c](https://github.com/googlemaps/js-markerclusterer/commit/90ccc3cbd733a912b1942c2b90e7e1333bf70879))
+
+## Earlier releases
+
+Release notes for 2.5.3 and earlier are in [GitHub Releases](https://github.com/googlemaps/js-markerclusterer/releases).
