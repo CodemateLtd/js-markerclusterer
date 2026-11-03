@@ -23,3 +23,18 @@
 
         # Run unit tests.
         npm test
+
+1.  Run the browser tests against the built examples:
+
+        # Once, to download the browser.
+        npx playwright install chromium
+
+        # Offline tests only: the examples index, and the error each example
+        # shows when the Maps JavaScript API can't load.
+        npm run test:e2e
+
+        # All tests, including those that load the examples against the live
+        # Maps JavaScript API. Use a key that allows http://127.0.0.1.
+        GOOGLE_MAPS_API_KEY=YOUR_API_KEY npm run test:e2e
+
+    The examples are served on port 8090; set `E2E_PORT` to use another.

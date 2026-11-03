@@ -20,5 +20,5 @@ module.exports = {
   testEnvironment: "jsdom",
   transformIgnorePatterns: [],
   collectCoverage: true,
-  testPathIgnorePatterns: ["/dist/"],
+  testPathIgnorePatterns: ["/dist/", "/e2e/"],
 };
