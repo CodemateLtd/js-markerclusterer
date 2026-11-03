@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+import type * as leaflet from "leaflet";
+// Adds markerClusterGroup to the Leaflet types.
+import type {} from "leaflet.markercluster";
 import points from "./realworld.json";
 
-declare let L: any; /* eslint-disable-line @typescript-eslint/no-explicit-any */
+// Leaflet and leaflet.markercluster load as globals from bench-leaflet.html.
+declare const L: typeof leaflet;
 
 async function main() {
   const tiles = L.tileLayer("//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
