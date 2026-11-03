@@ -27,6 +27,17 @@ import { setOptions, importLibrary } from "@googlemaps/js-api-loader";
 import { interpolateRgb } from "d3-interpolate";
 import trees from "./trees.json";
 
+// renderers.html loads highlight.js 11.2.0 from a CDN as the `hljs` global.
+// This types only the call made below, with fields from that version's
+// HighlightOptions and HighlightResult.
+declare global {
+  interface Window {
+    hljs: {
+      highlight(code: string, options: { language: string }): { value: string };
+    };
+  }
+}
+
 const mapOptions: google.maps.MapOptions = {
   center: { lat: 40.7128, lng: -73.85 },
   zoom: 10,
@@ -123,7 +134,6 @@ async function main() {
     maps.push(map);
 
     const textElement = document.createElement("pre");
-    // @ts-expect-error - hljs is not on window
     textElement.innerHTML = window.hljs.highlight(text, {
       language: "typescript",
     }).value;
