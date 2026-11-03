@@ -11,6 +11,8 @@
 
 ## Running the tests
 
+1.  Install [Node.js](https://nodejs.org/en/download) 20.19 or a later 20.x
+    release, 22.13 or a later 22.x release, or 24 or later. It includes npm.
 1.  Install dependencies:
 
         npm i
