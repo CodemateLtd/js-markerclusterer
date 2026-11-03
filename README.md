@@ -71,6 +71,7 @@ const markerCluster = new MarkerClusterer({ map, markers });
 ```
 
 To run the examples:
+- Install [Node.js](https://nodejs.org/en/download) 20.19 or a later 20.x release, 22.13 or a later 22.x release, or 24 or later. It includes npm. These versions apply only to building and serving the examples; the library itself runs in the browser.
 - Install dependencies: ```npm install```
 - Start the development server in the root folder: ```npm run dev```
 - Navigate to [http://localhost:8080/](http://localhost:8080/) in your web browser.
